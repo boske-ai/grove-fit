@@ -36,6 +36,19 @@
   margin-bottom: 0.6rem;
 }
 
+.gf-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.gf-brand-logo {
+  flex-shrink: 0;
+  border-radius: 7px;
+  box-shadow: 0 2px 8px rgba(31, 47, 24, 0.12);
+}
+
 .gf-topbar h1 {
   color: var(--gf-green);
   font-size: 1.2rem;

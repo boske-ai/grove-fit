@@ -14,6 +14,7 @@ import { FitToolbar } from './fit-toolbar.js';
 import { HardwareForm, profileToFormValues, type HardwareFormValues } from './hardware-form.js';
 import { HardwareSummary } from './hardware-summary.js';
 import { ModelSearch } from './model-search.js';
+import { Logo } from './logo.js';
 import { TierResultGrid } from './tier-result-grid.js';
 import type { CatalogModelEntry } from './types.js';
 import './styles.css';
@@ -142,7 +143,10 @@ export function FitPage({
     <div className="gf-root">
       <div className="gf-shell">
         <header className="gf-topbar">
-          <h1>Grove Fit</h1>
+          <div className="gf-brand">
+            <Logo size={30} className="gf-brand-logo" />
+            <h1>Grove Fit</h1>
+          </div>
           <FitToolbar
             onRescan={() => void runDetect({ force: true })}
             onRefreshCatalog={onRefreshCatalog}
