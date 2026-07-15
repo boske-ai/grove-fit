@@ -1,0 +1,21 @@
+{
+  "id": "ios-6gb-unified",
+  "description": "iOS 6 GB unified Metal — seed recommended",
+  "profile": {
+    "platform": "ios",
+    "totalRAMGB": 6,
+    "gpuMemoryGB": 0,
+    "gpuBackend": "metal",
+    "gpuName": "Apple GPU",
+    "source": "native"
+  },
+  "expected": {
+    "recommendedTier": "seed",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "unavailable",
+      "canopy": "unavailable",
+      "forest": "unavailable"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@boske-labs/grove-fit-conformance",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Golden hardware fixtures — test all platforms against same tier fit",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boske-ai/grove-fit.git"
+  },
+  "homepage": "https://github.com/boske-ai/grove-fit#readme",
+  "bugs": {
+    "url": "https://github.com/boske-ai/grove-fit/issues"
+  },
+  "dependencies": {
+    "@boske-labs/grove-fit-core": "workspace:*",
+    "@boske-labs/grove-fit-detect": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

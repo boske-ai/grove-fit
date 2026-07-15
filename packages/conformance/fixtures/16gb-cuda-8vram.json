@@ -1,0 +1,21 @@
+{
+  "id": "16gb-cuda-8vram",
+  "description": "16 GB system RAM, 8 GB VRAM CUDA — branch recommended",
+  "profile": {
+    "platform": "linux",
+    "totalRAMGB": 16,
+    "gpuMemoryGB": 8,
+    "gpuBackend": "cuda",
+    "gpuName": "NVIDIA RTX 3070",
+    "source": "llmfit"
+  },
+  "expected": {
+    "recommendedTier": "branch",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "recommended",
+      "canopy": "marginal",
+      "forest": "unavailable"
+    }
+  }
+}

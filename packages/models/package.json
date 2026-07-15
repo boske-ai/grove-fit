@@ -1,0 +1,35 @@
+{
+  "name": "@boske-labs/grove-fit-models",
+  "version": "0.1.1",
+  "description": "Boske catalog overlay + synced llmfit export",
+  "type": "module",
+  "main": "./catalog.json",
+  "exports": {
+    "./boske-catalog": "./boske-catalog.json",
+    "./catalog": "./catalog.json",
+    "./catalog-meta": "./catalog-meta.json",
+    "./search-index": "./search-index.json"
+  },
+  "files": [
+    "boske-catalog.json",
+    "catalog.json",
+    "catalog-meta.json",
+    "search-index.json"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build-search-index.mjs --catalog ./catalog.json --out ./search-index.json || true",
+    "test": "node --test src/catalog.test.mjs"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boske-ai/grove-fit.git"
+  },
+  "homepage": "https://github.com/boske-ai/grove-fit#readme",
+  "bugs": {
+    "url": "https://github.com/boske-ai/grove-fit/issues"
+  }
+}

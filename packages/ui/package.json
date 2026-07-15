@@ -1,0 +1,51 @@
+{
+  "name": "@boske-labs/grove-fit-ui",
+  "version": "0.1.0",
+  "description": "Shared Boske-styled Grove Fit UI components",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/grove-fit-ui.css"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boske-ai/grove-fit.git"
+  },
+  "homepage": "https://github.com/boske-ai/grove-fit#readme",
+  "bugs": {
+    "url": "https://github.com/boske-ai/grove-fit/issues"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@boske-labs/grove-fit-core": "workspace:*",
+    "@boske-labs/grove-fit-detect": "workspace:*",
+    "minisearch": "^7.1.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  }
+}

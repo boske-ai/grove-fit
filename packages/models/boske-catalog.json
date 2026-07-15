@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-18",
+  "description": "Boske tier overlay for Grove Fit. Hand-maintained. Cloud rows are not Grove Fit certified (v1).",
+  "entries": [
+    {
+      "id": "boske-seed",
+      "kind": "boske-tier",
+      "tier": "seed",
+      "label": "Boske Seed",
+      "icon": "🌱",
+      "paramsB": 3,
+      "minRAMGB": 6,
+      "groveFitCertified": true,
+      "isCloud": false,
+      "isBoske": true,
+      "bundle": ["instruct", "reasoning", "vision"],
+      "upstreamHint": "Ministral 3B",
+      "searchTokens": ["boske", "seed", "ministral", "3b", "local"]
+    },
+    {
+      "id": "boske-branch",
+      "kind": "boske-tier",
+      "tier": "branch",
+      "label": "Boske Branch",
+      "icon": "🌿",
+      "paramsB": 8,
+      "minRAMGB": 12,
+      "groveFitCertified": true,
+      "isCloud": false,
+      "isBoske": true,
+      "bundle": ["instruct", "reasoning", "vision"],
+      "upstreamHint": "Ministral 8B",
+      "searchTokens": ["boske", "branch", "ministral", "8b", "local"]
+    },
+    {
+      "id": "boske-canopy",
+      "kind": "boske-tier",
+      "tier": "canopy",
+      "label": "Boske Canopy",
+      "icon": "🌳",
+      "paramsB": 14,
+      "minRAMGB": 16,
+      "groveFitCertified": true,
+      "isCloud": false,
+      "isBoske": true,
+      "bundle": ["instruct", "reasoning", "vision"],
+      "upstreamHint": "Ministral 14B",
+      "searchTokens": ["boske", "canopy", "ministral", "14b", "local"]
+    },
+    {
+      "id": "boske-forest",
+      "kind": "boske-tier",
+      "tier": "forest",
+      "label": "Boske Forest",
+      "icon": "🌲",
+      "paramsB": 24,
+      "minRAMGB": 24,
+      "groveFitCertified": true,
+      "isCloud": false,
+      "isBoske": true,
+      "bundle": ["instruct", "reasoning", "vision"],
+      "upstreamHint": "Mistral Small 24B / Magistral Small 24B",
+      "searchTokens": ["boske", "forest", "mistral", "24b", "magistral", "local"]
+    },
+    {
+      "id": "boske-breeze",
+      "kind": "boske-cloud",
+      "tier": "breeze",
+      "label": "Breeze",
+      "icon": "💨",
+      "paramsB": null,
+      "minRAMGB": 0,
+      "groveFitCertified": false,
+      "isCloud": true,
+      "isBoske": true,
+      "alwaysAvailable": true,
+      "upstreamHint": "mistral-small-latest",
+      "searchTokens": ["boske", "breeze", "cloud", "mistral small"]
+    },
+    {
+      "id": "boske-summit",
+      "kind": "boske-cloud",
+      "tier": "summit",
+      "label": "Summit",
+      "icon": "🏔️",
+      "paramsB": null,
+      "minRAMGB": 0,
+      "groveFitCertified": false,
+      "isCloud": true,
+      "isBoske": true,
+      "alwaysAvailable": true,
+      "upstreamHint": "mistral-large-latest",
+      "searchTokens": ["boske", "summit", "cloud", "mistral large"]
+    }
+  ],
+  "funnelParamBands": {
+    "seed": { "maxParamsB": 4 },
+    "branch": { "minParamsB": 5, "maxParamsB": 10 },
+    "canopy": { "minParamsB": 11, "maxParamsB": 16 },
+    "forest": { "minParamsB": 17 }
+  },
+  "legacyAliases": {
+    "ancient": "summit"
+  }
+}

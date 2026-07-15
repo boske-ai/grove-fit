@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Grove Fit default capabilities",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/llmfit",
+          "sidecar": true,
+          "args": ["--json", "system"]
+        }
+      ]
+    }
+  ]
+}

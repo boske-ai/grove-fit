@@ -1,0 +1,20 @@
+{
+  "id": "webgpu-16gb-hint",
+  "description": "Web deviceMemory 16 GB WebGPU path — branch or canopy class",
+  "profile": {
+    "platform": "web",
+    "totalRAMGB": 16,
+    "gpuMemoryGB": 10,
+    "gpuBackend": "webgpu",
+    "source": "webgpu"
+  },
+  "expected": {
+    "recommendedTier": "branch",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "recommended",
+      "canopy": "marginal",
+      "forest": "unavailable"
+    }
+  }
+}

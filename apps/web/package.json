@@ -1,0 +1,33 @@
+{
+  "name": "@boske-labs/grove-fit-web",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/stage-catalog.mjs && vite",
+    "build": "node ../../scripts/stage-catalog.mjs && vite build",
+    "preview": "vite preview",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@boske-labs/grove-fit-detect": "workspace:*",
+    "@boske-labs/grove-fit-mobile": "workspace:*",
+    "@boske-labs/grove-fit-models": "workspace:*",
+    "@boske-labs/grove-fit-ui": "workspace:*",
+    "@capacitor/core": "^7.2.0",
+    "@tauri-apps/api": "^2.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  }
+}

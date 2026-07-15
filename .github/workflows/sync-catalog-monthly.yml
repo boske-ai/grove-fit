@@ -1,0 +1,114 @@
+name: sync-catalog-monthly
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+    inputs:
+      llmfit_version:
+        description: 'llmfit git tag (empty = latest GitHub release)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Resolve llmfit tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.llmfit_version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_TAG}" ]; then
+            TAG="${INPUT_TAG}"
+          else
+            TAG="$(curl -fsSL https://api.github.com/repos/AlexsJones/llmfit/releases/latest | python3 -c 'import sys,json; print(json.load(sys.stdin)["tag_name"])')"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved llmfit tag: ${TAG}"
+
+      - name: Verify upstream model source path
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          # Must match scripts/sync-llmfit-db.sh default; do not invent paths.
+          HF_PATH: llmfit-core/data/hf_models.json
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/AlexsJones/llmfit/${TAG}/${HF_PATH}"
+          code="$(curl -fsSIL -o /dev/null -w '%{http_code}' "$URL" || true)"
+          if [ "$code" != "200" ]; then
+            echo "::error::Upstream model source missing for ${TAG} at ${HF_PATH} (HTTP ${code}). Probe the tagged tree and update sync-llmfit-db.sh — never guess a path."
+            exit 1
+          fi
+          echo "Verified ${URL}"
+
+      - run: bun install
+
+      - name: Sync catalog
+        env:
+          LLMFIT_VERSION: ${{ steps.tag.outputs.tag }}
+        run: bun run sync:catalog
+
+      - name: Patch models package version when catalog changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- packages/models/catalog.json packages/models/catalog-meta.json packages/models/search-index.json; then
+            echo "No catalog changes."
+            echo "changed=false" >> "$GITHUB_ENV"
+          else
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import date
+          pkg = Path('packages/models/package.json')
+          data = json.loads(pkg.read_text())
+          major, minor, patch = data['version'].split('.')
+          data['version'] = f'{major}.{minor}.{int(patch)+1}'
+          pkg.write_text(json.dumps(data, indent=2) + '\n')
+          meta = json.loads(Path('packages/models/catalog-meta.json').read_text())
+          meta['syncedAt'] = date.today().isoformat()
+          Path('packages/models/catalog-meta.json').write_text(json.dumps(meta, indent=2) + '\n')
+          print('bumped models to', data['version'])
+          PY
+            echo "changed=true" >> "$GITHUB_ENV"
+          fi
+
+      - run: bun run build
+      - run: bun test
+      - run: bun run conformance
+
+      - name: Open pull request
+        if: env.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/catalog-sync-${TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add packages/models scripts/sync-llmfit-db.sh || true
+          git commit -m "chore(models): sync catalog from llmfit ${TAG}"
+          git push -u origin "$BRANCH"
+          COUNT="$(python3 -c 'import json; print(json.load(open("packages/models/catalog-meta.json"))["modelCount"])')"
+          gh pr create --title "chore(models): sync catalog from llmfit ${TAG}" --body "$(cat <<EOF
+          ## Summary
+          - Monthly catalog sync from llmfit \`${TAG}\`
+          - Upstream source: \`llmfit-core/data/hf_models.json\`
+          - Model count: ${COUNT}
+
+          ## Notes
+          - Does **not** publish npm packages
+          - Human review required before merge
+          EOF
+          )" || gh pr view --json url -q .url

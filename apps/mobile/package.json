@@ -1,0 +1,30 @@
+{
+  "name": "@boske-labs/grove-fit-mobile",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "description": "Grove Fit mobile companion — Capacitor (iOS, Android)",
+  "exports": {
+    "./plugin": "./src/plugin/detect.ts"
+  },
+  "scripts": {
+    "dev": "cap run ios",
+    "dev:android": "cap run android",
+    "sync": "cap sync",
+    "sync:native": "bash ../../scripts/sync-mobile-native.sh && cap sync",
+    "build:web": "bun run --cwd ../web build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/ios": "^7.2.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@boske-labs/grove-fit-detect": "workspace:*"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@boske-labs/grove-fit-detect",
+  "version": "0.1.0",
+  "description": "Hardware detection adapters for Grove Fit",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boske-ai/grove-fit.git"
+  },
+  "homepage": "https://github.com/boske-ai/grove-fit#readme",
+  "bugs": {
+    "url": "https://github.com/boske-ai/grove-fit/issues"
+  },
+  "dependencies": {
+    "@boske-labs/grove-fit-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

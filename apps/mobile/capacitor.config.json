@@ -1,0 +1,13 @@
+{
+  "appId": "dev.boske.grovefit",
+  "appName": "Grove Fit",
+  "webDir": "../web/dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "GroveFitHardware": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@boske-labs/grove-fit-desktop",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Grove Fit desktop companion — Tauri shell (Windows, macOS, Linux)",
+  "scripts": {
+    "prepare:sidecar": "bash ../../scripts/copy-llmfit-sidecar.sh",
+    "dev": "bash ../../scripts/copy-llmfit-sidecar.sh && tauri dev",
+    "build": "bash ../../scripts/copy-llmfit-sidecar.sh && tauri build",
+    "test": "echo \"Desktop: run conformance + manual Tauri smoke\""
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0"
+  }
+}

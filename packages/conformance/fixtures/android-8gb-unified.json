@@ -1,0 +1,20 @@
+{
+  "id": "android-8gb-unified",
+  "description": "Android 8 GB unified — seed recommended companion profile",
+  "profile": {
+    "platform": "android",
+    "totalRAMGB": 8,
+    "gpuMemoryGB": 2,
+    "gpuBackend": "vulkan",
+    "source": "native"
+  },
+  "expected": {
+    "recommendedTier": "seed",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "unavailable",
+      "canopy": "unavailable",
+      "forest": "unavailable"
+    }
+  }
+}

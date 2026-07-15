@@ -1,0 +1,61 @@
+name: conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run build
+      - run: bun test
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run --filter '@boske-labs/grove-fit-core' build
+      - run: bun run --filter '@boske-labs/grove-fit-detect' build
+      - run: bun run --filter '@boske-labs/grove-fit-core' test
+      - run: bun run --filter '@boske-labs/grove-fit-detect' test
+      - run: bun run conformance
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run --filter '@boske-labs/grove-fit-core' build
+      - run: bun run --filter '@boske-labs/grove-fit-detect' build
+      - run: bun run --filter '@boske-labs/grove-fit-core' test
+      - run: bun run --filter '@boske-labs/grove-fit-detect' test
+      - run: bun run conformance
+
+  test-web-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run --cwd apps/web test:e2e
+        env:
+          CI: 'true'
+
+  test-mobile-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run --filter '@boske-labs/grove-fit-core' build
+      - run: bun run --filter '@boske-labs/grove-fit-detect' build
+      - run: bun run --cwd apps/mobile test

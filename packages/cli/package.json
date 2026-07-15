@@ -1,0 +1,36 @@
+{
+  "name": "grove-fit-cli",
+  "version": "0.1.0",
+  "description": "Grove Fit CLI — Boske-first wrapper around llmfit",
+  "type": "module",
+  "bin": {
+    "grove-fit": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boske-ai/grove-fit.git"
+  },
+  "homepage": "https://github.com/boske-ai/grove-fit#readme",
+  "bugs": {
+    "url": "https://github.com/boske-ai/grove-fit/issues"
+  },
+  "dependencies": {
+    "@boske-labs/grove-fit-core": "workspace:*",
+    "@boske-labs/grove-fit-detect": "workspace:*",
+    "@boske-labs/grove-fit-models": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

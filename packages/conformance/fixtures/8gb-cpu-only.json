@@ -1,0 +1,20 @@
+{
+  "id": "8gb-cpu-only",
+  "description": "8 GB RAM, CPU-only — seed recommended, forest unavailable",
+  "profile": {
+    "platform": "web",
+    "totalRAMGB": 8,
+    "gpuMemoryGB": 0,
+    "gpuBackend": "cpu",
+    "source": "manual"
+  },
+  "expected": {
+    "recommendedTier": "seed",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "unavailable",
+      "canopy": "unavailable",
+      "forest": "unavailable"
+    }
+  }
+}

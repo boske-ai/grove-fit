@@ -1,0 +1,21 @@
+{
+  "id": "32gb-metal",
+  "description": "32 GB unified memory Metal — forest recommended",
+  "profile": {
+    "platform": "macos",
+    "totalRAMGB": 32,
+    "gpuMemoryGB": 32,
+    "gpuBackend": "metal",
+    "gpuName": "Apple M2 Max",
+    "source": "llmfit"
+  },
+  "expected": {
+    "recommendedTier": "forest",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "recommended",
+      "canopy": "recommended",
+      "forest": "recommended"
+    }
+  }
+}

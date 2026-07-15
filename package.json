@@ -1,0 +1,22 @@
+{
+  "name": "grove-fit",
+  "private": true,
+  "description": "Grove Fit — hardware fit for local AI (Boske Labs)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "bun run --filter '@boske-labs/*' test && bun run --filter 'grove-fit-cli' test",
+    "build": "bun run --filter '@boske-labs/grove-fit-core' build && bun run --filter '@boske-labs/grove-fit-detect' build && bun run --filter '@boske-labs/grove-fit-ui' build && bun run --filter 'grove-fit-cli' build",
+    "sync:catalog": "bash scripts/sync-llmfit-db.sh",
+    "sync:mobile-native": "bash scripts/sync-mobile-native.sh",
+    "dev:web": "bun run --cwd apps/web dev",
+    "dev:desktop": "bun run --cwd apps/desktop dev",
+    "gui": "node scripts/start-gui.mjs",
+    "conformance": "bun run --filter '@boske-labs/grove-fit-conformance' test",
+    "test:e2e": "bun run --cwd apps/web test:e2e",
+    "prepublish:packages": "bun run build"
+  },
+  "license": "MIT"
+}
