@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/web/public/logo.svg" alt="Grove Fit" width="120" />
+</p>
+
 # Grove Fit
 
 **Open hardware fit for local AI — powered by [llmfit](https://github.com/AlexsJones/llmfit), curated for [Boske](https://boske.dev).**
