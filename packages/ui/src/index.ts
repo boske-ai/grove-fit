@@ -1,4 +1,5 @@
 export { FitPage, type FitPageProps, type CatalogLoadStatus } from './fit-page.js';
+export { Logo, type LogoProps } from './logo.js';
 export { FitToolbar } from './fit-toolbar.js';
 export { FitBadge, fitSummaryLine } from './fit-badge.js';
 export { GroveFitCertifiedBadge } from './grove-fit-certified-badge.js';
