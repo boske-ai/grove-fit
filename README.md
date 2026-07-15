@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/logo.svg" alt="Grove Fit" width="120" />
+  <img src="apps/web/public/logo.jpg" alt="Grove Fit" width="120" />
 </p>
 
 # Grove Fit
