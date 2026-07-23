@@ -6,7 +6,7 @@
   "type": "module",
   "description": "Grove Fit mobile companion — Capacitor (iOS, Android)",
   "exports": {
-    "./plugin": "./src/plugin/detect.ts"
+    "./plugin": "./src/plugin/index.ts"
   },
   "scripts": {
     "dev": "cap run ios",

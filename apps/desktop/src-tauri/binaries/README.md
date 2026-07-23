@@ -27,8 +27,15 @@ bash scripts/copy-llmfit-sidecar.sh
 
 Install llmfit if needed: `brew install AlexsJones/llmfit/llmfit`
 
-When llmfit is missing, the copy script writes a **stub** executable (exit 1) so Tauri builds succeed; runtime falls back to native detect.
+When llmfit is missing, the copy script writes a **stub** executable (exit 1) so Tauri builds succeed; runtime falls back to native OS probes (no PATH `llmfit` fallback).
 
-After copying a real binary, a sidecar `$DEST.sha256` is written (gitignored). For release builds, pin hashes in `llmfit-sidecar-hashes.json` or set `LLMFIT_SIDECAR_EXPECTED_SHA256`. Use `LLMFIT_VERIFY_SIDECAR=1` to fail the copy step when no hash is pinned.
+After copying a **real** binary, the copy script **requires** a pinned SHA256 — either a non-empty `hashes.<triple>` in [`llmfit-sidecar-hashes.json`](./llmfit-sidecar-hashes.json) or `LLMFIT_SIDECAR_EXPECTED_SHA256`. Mismatch fails the script. Missing/empty pins refuse the real binary and write a stub instead (so Intel/Linux/Windows builds without a pin still succeed). Stubs skip hash checks.
 
-Binaries here are gitignored. CI release jobs should download or build llmfit per target, copy into this folder, then run `tauri build`.
+Maintainer release steps:
+
+1. Install or build llmfit for the target triple.
+2. Compute `shasum -a 256` of the binary and put it in `llmfit-sidecar-hashes.json` under `hashes.<triple>` (or export `LLMFIT_SIDECAR_EXPECTED_SHA256`).
+3. Run `node scripts/copy-llmfit-sidecar.mjs` (or `FORCE_LLMFIT_SIDECAR=1` to refresh).
+4. Run `tauri build`.
+
+Binaries here are gitignored. A sidecar `$DEST.sha256` is also written locally (gitignored) for convenience.

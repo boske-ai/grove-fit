@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-detect-hardware"
+description = "Allows the frontend to invoke native/llmfit hardware detection."
+commands.allow = ["detect_hardware"]

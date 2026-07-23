@@ -17,7 +17,7 @@
     "search-index.json"
   ],
   "scripts": {
-    "build": "node ../../scripts/build-search-index.mjs --catalog ./catalog.json --out ./search-index.json || true",
+    "build": "node ../../scripts/build-search-index.mjs --catalog ./catalog.json --out ./search-index.json",
     "test": "node --test src/catalog.test.mjs"
   },
   "license": "MIT",

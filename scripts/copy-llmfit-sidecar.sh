@@ -62,19 +62,41 @@ import json, sys
 path, triple = sys.argv[1], sys.argv[2]
 with open(path, encoding="utf-8") as f:
     data = json.load(f)
-print(data.get("hashes", {}).get(triple, ""))
+pinned = str(data.get("hashes", {}).get(triple, "") or "").strip()
+print(pinned)
 PY
     return 0
   fi
   echo ""
 }
 
+pinned_hash_or_empty() {
+  expected_hash_for_triple "$TARGET_TRIPLE" | tr -d '[:space:]'
+}
+
+write_stub() {
+  cat >"$DEST" <<'STUB'
+#!/usr/bin/env bash
+# Placeholder — replace via copy-llmfit-sidecar.sh when llmfit is installed.
+exit 1
+STUB
+  chmod +x "$DEST"
+  echo "copy-llmfit-sidecar: stub at $DEST (install llmfit for rich GPU detect)"
+  echo "  brew install AlexsJones/llmfit/llmfit"
+  echo "  or LLMFIT_PATH=/path/to/llmfit bash scripts/copy-llmfit-sidecar.sh"
+}
+
+# Unpinned real sidecars are refused — stub so cargo/tauri builds still succeed.
+refuse_unpinned_real_sidecar() {
+  echo "copy-llmfit-sidecar: no pinned SHA256 for $TARGET_TRIPLE — refusing unverified real sidecar" >&2
+  echo "  add hashes.<triple> in llmfit-sidecar-hashes.json or set LLMFIT_SIDECAR_EXPECTED_SHA256" >&2
+  write_stub
+  exit 0
+}
+
 verify_sidecar_hash() {
   local file=$1
   local expected=$2
-  if [[ -z "$expected" ]]; then
-    return 0
-  fi
   local actual
   actual="$(sha256_file "$file")"
   if [[ "$actual" != "$expected" ]]; then
@@ -103,54 +125,44 @@ sidecar_up_to_date() {
 }
 
 if [[ -f "$DEST" && "${FORCE_LLMFIT_SIDECAR:-}" != "1" ]]; then
-  EXPECTED="$(expected_hash_for_triple "$TARGET_TRIPLE" | tr -d '[:space:]')"
   if SRC="$(resolve_llmfit)"; then
     if sidecar_up_to_date "$SRC" "$DEST"; then
-      echo "copy-llmfit-sidecar: up to date at $DEST"
-      if [[ -n "$EXPECTED" ]]; then
-        verify_sidecar_hash "$DEST" "$EXPECTED" || exit 1
+      EXPECTED="$(pinned_hash_or_empty)"
+      if [[ -z "$EXPECTED" ]]; then
+        refuse_unpinned_real_sidecar
       fi
+      echo "copy-llmfit-sidecar: up to date at $DEST"
+      verify_sidecar_hash "$DEST" "$EXPECTED" || exit 1
       exit 0
     fi
   elif is_stub_sidecar "$DEST"; then
     echo "copy-llmfit-sidecar: stub present, llmfit not installed — skip"
     exit 0
-  elif [[ -n "$EXPECTED" ]]; then
-    verify_sidecar_hash "$DEST" "$EXPECTED" || exit 1
-    echo "copy-llmfit-sidecar: present at $DEST"
-    exit 0
   else
+    EXPECTED="$(pinned_hash_or_empty)"
+    if [[ -z "$EXPECTED" ]]; then
+      refuse_unpinned_real_sidecar
+    fi
+    verify_sidecar_hash "$DEST" "$EXPECTED" || exit 1
     echo "copy-llmfit-sidecar: present at $DEST"
     exit 0
   fi
 fi
 
 if SRC="$(resolve_llmfit)"; then
+  EXPECTED="$(pinned_hash_or_empty)"
+  if [[ -z "$EXPECTED" ]]; then
+    refuse_unpinned_real_sidecar
+  fi
   cp "$SRC" "$DEST"
   chmod +x "$DEST"
   ACTUAL_HASH="$(sha256_file "$DEST")"
   echo "$ACTUAL_HASH" >"$DEST.sha256"
   echo "copy-llmfit-sidecar: copied $SRC → $DEST"
   echo "copy-llmfit-sidecar: sha256 $ACTUAL_HASH"
-
-  EXPECTED="$(expected_hash_for_triple "$TARGET_TRIPLE" | tr -d '[:space:]')"
-  if [[ -n "$EXPECTED" ]]; then
-    verify_sidecar_hash "$DEST" "$EXPECTED" || exit 1
-  elif [[ "${LLMFIT_VERIFY_SIDECAR:-}" == "1" ]]; then
-    echo "copy-llmfit-sidecar: LLMFIT_VERIFY_SIDECAR=1 but no hash pinned for $TARGET_TRIPLE" >&2
-    echo "  set LLMFIT_SIDECAR_EXPECTED_SHA256 or add to llmfit-sidecar-hashes.json" >&2
-    exit 1
-  fi
+  verify_sidecar_hash "$DEST" "$EXPECTED" || exit 1
 else
-  cat >"$DEST" <<'STUB'
-#!/usr/bin/env bash
-# Placeholder — replace via copy-llmfit-sidecar.sh when llmfit is installed.
-exit 1
-STUB
-  chmod +x "$DEST"
-  echo "copy-llmfit-sidecar: stub at $DEST (install llmfit for rich GPU detect)"
-  echo "  brew install AlexsJones/llmfit/llmfit"
-  echo "  or LLMFIT_PATH=/path/to/llmfit bash scripts/copy-llmfit-sidecar.sh"
+  write_stub
 fi
 
 exit 0

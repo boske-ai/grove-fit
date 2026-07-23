@@ -8,12 +8,11 @@
     "dev": "node ../../scripts/stage-catalog.mjs && vite",
     "build": "node ../../scripts/stage-catalog.mjs && vite build",
     "preview": "vite preview",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:e2e": "playwright test"
   },
   "dependencies": {
     "@boske-labs/grove-fit-detect": "workspace:*",
-    "@boske-labs/grove-fit-mobile": "workspace:*",
     "@boske-labs/grove-fit-models": "workspace:*",
     "@boske-labs/grove-fit-ui": "workspace:*",
     "@capacitor/core": "^7.2.0",

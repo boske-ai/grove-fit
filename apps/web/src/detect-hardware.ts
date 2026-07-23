@@ -25,7 +25,7 @@ export async function detectMobileHardware(): Promise<HardwareProfile | null> {
     }
 
     const { detectMobileHardware: detect } = await import(
-      '@boske-labs/grove-fit-mobile/plugin'
+      '@boske-labs/grove-fit-detect/capacitor'
     );
     return await detect();
   } catch (error) {

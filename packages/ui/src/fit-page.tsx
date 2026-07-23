@@ -16,6 +16,7 @@ import { HardwareSummary } from './hardware-summary.js';
 import { ModelSearch } from './model-search.js';
 import { Logo } from './logo.js';
 import { TierResultGrid } from './tier-result-grid.js';
+import type { CatalogSearchDocument } from './use-catalog-search.js';
 import type { CatalogModelEntry } from './types.js';
 import './styles.css';
 
@@ -23,6 +24,8 @@ export type CatalogLoadStatus = 'loading-full' | 'ready' | 'boske-only';
 
 export interface FitPageProps {
   catalogEntries: CatalogModelEntry[];
+  /** Slim MiniSearch docs from search-index.json when available. */
+  searchDocuments?: CatalogSearchDocument[];
   initialProfile?: HardwareProfile | null;
   autoDetectWebGpu?: boolean;
   detectHardware?: () => Promise<HardwareProfile | null>;
@@ -43,6 +46,7 @@ function snapshotFromProfile(profile: HardwareProfile): HardwareFitSnapshot {
 
 export function FitPage({
   catalogEntries,
+  searchDocuments,
   initialProfile = null,
   autoDetectWebGpu = true,
   detectHardware,
@@ -179,7 +183,11 @@ export function FitPage({
 
         {snapshot && !isScanning ? (
           <div className="gf-main-grid">
-            <ModelSearch entries={catalogEntries} snapshot={snapshot} />
+            <ModelSearch
+              entries={catalogEntries}
+              searchDocuments={searchDocuments}
+              snapshot={snapshot}
+            />
             <TierResultGrid snapshot={snapshot} boskeTiers={boskeEntries} />
           </div>
         ) : null}

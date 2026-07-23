@@ -1,2 +1,7 @@
-export { GroveFitHardware, type GroveFitHardwarePlugin } from './registry.js';
-export { detectMobileHardware, type NativeDetectRaw } from './detect.js';
+export {
+  GroveFitHardware,
+  detectMobileHardware,
+  type GroveFitHardwarePlugin,
+  type NativeDetectRaw,
+} from '@boske-labs/grove-fit-detect/capacitor';
+export { GroveFitHardwareWeb } from '@boske-labs/grove-fit-detect/capacitor/web';

@@ -31,7 +31,6 @@
       "version": "0.1.0",
       "dependencies": {
         "@boske-labs/grove-fit-detect": "workspace:*",
-        "@boske-labs/grove-fit-mobile": "workspace:*",
         "@boske-labs/grove-fit-models": "workspace:*",
         "@boske-labs/grove-fit-ui": "workspace:*",
         "@capacitor/core": "^7.2.0",
@@ -93,13 +92,20 @@
         "@boske-labs/grove-fit-core": "workspace:*",
       },
       "devDependencies": {
+        "@capacitor/core": "^7.2.0",
         "typescript": "^5.8.3",
         "vitest": "^3.2.4",
       },
+      "peerDependencies": {
+        "@capacitor/core": "^7.0.0",
+      },
+      "optionalPeers": [
+        "@capacitor/core",
+      ],
     },
     "packages/models": {
       "name": "@boske-labs/grove-fit-models",
-      "version": "0.1.0",
+      "version": "0.1.1",
     },
     "packages/ui": {
       "name": "@boske-labs/grove-fit-ui",

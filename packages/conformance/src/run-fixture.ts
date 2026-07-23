@@ -24,6 +24,7 @@ export function loadFixtures(): ConformanceFixture[] {
     '32gb-metal.json',
     '16gb-cuda-8vram.json',
     'android-8gb-unified.json',
+    'android-16gb-unified.json',
     'ios-6gb-unified.json',
     'webgpu-16gb-hint.json',
   ];

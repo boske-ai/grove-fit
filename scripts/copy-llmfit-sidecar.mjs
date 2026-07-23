@@ -46,13 +46,32 @@ function expectedHashForTriple(triple) {
   }
   if (existsSync(hashManifest)) {
     const data = JSON.parse(readFileSync(hashManifest, 'utf8'));
-    return String(data.hashes?.[triple] ?? '').trim();
+    const pinned = String(data.hashes?.[triple] ?? '').trim();
+    // Empty placeholders in the committed manifest are not pins.
+    if (pinned) return pinned;
   }
   return '';
 }
 
+/** Returns pinned hash, or null when the triple has no pin (empty placeholder). */
+function pinnedHashOrNull(triple) {
+  const expected = expectedHashForTriple(triple);
+  return expected || null;
+}
+
+/** Unpinned real sidecars are refused — stub so cargo/tauri builds still succeed. */
+function refuseUnpinnedRealSidecar() {
+  console.error(
+    `copy-llmfit-sidecar: no pinned SHA256 for ${targetTriple} — refusing unverified real sidecar`,
+  );
+  console.error(
+    '  add hashes.<triple> in llmfit-sidecar-hashes.json or set LLMFIT_SIDECAR_EXPECTED_SHA256',
+  );
+  writeStub();
+  process.exit(0);
+}
+
 function verifySidecarHash(file, expected) {
-  if (!expected) return;
   const actual = sha256File(file);
   if (actual !== expected) {
     console.error(`copy-llmfit-sidecar: SHA256 mismatch for ${targetTriple}`);
@@ -119,23 +138,27 @@ exit 1
 }
 
 if (existsSync(dest) && process.env.FORCE_LLMFIT_SIDECAR !== '1') {
-  const expected = expectedHashForTriple(targetTriple);
   const src = resolveLlmfit();
 
   if (src) {
     if (sidecarUpToDate(src, dest)) {
+      const pinned = pinnedHashOrNull(targetTriple);
+      if (!pinned) {
+        refuseUnpinnedRealSidecar();
+      }
       console.log(`copy-llmfit-sidecar: up to date at ${dest}`);
-      verifySidecarHash(dest, expected);
+      verifySidecarHash(dest, pinned);
       process.exit(0);
     }
   } else if (isStubSidecar(dest)) {
     console.log('copy-llmfit-sidecar: stub present, llmfit not installed — skip');
     process.exit(0);
-  } else if (expected) {
-    verifySidecarHash(dest, expected);
-    console.log(`copy-llmfit-sidecar: present at ${dest}`);
-    process.exit(0);
   } else {
+    const pinned = pinnedHashOrNull(targetTriple);
+    if (!pinned) {
+      refuseUnpinnedRealSidecar();
+    }
+    verifySidecarHash(dest, pinned);
     console.log(`copy-llmfit-sidecar: present at ${dest}`);
     process.exit(0);
   }
@@ -143,6 +166,10 @@ if (existsSync(dest) && process.env.FORCE_LLMFIT_SIDECAR !== '1') {
 
 const src = resolveLlmfit();
 if (src) {
+  const pinned = pinnedHashOrNull(targetTriple);
+  if (!pinned) {
+    refuseUnpinnedRealSidecar();
+  }
   copyFileSync(src, dest);
   try {
     chmodSync(dest, 0o755);
@@ -153,17 +180,7 @@ if (src) {
   writeFileSync(`${dest}.sha256`, `${actualHash}\n`, 'utf8');
   console.log(`copy-llmfit-sidecar: copied ${src} → ${dest}`);
   console.log(`copy-llmfit-sidecar: sha256 ${actualHash}`);
-
-  const expected = expectedHashForTriple(targetTriple);
-  if (expected) {
-    verifySidecarHash(dest, expected);
-  } else if (process.env.LLMFIT_VERIFY_SIDECAR === '1') {
-    console.error(
-      `copy-llmfit-sidecar: LLMFIT_VERIFY_SIDECAR=1 but no hash pinned for ${targetTriple}`,
-    );
-    console.error('  set LLMFIT_SIDECAR_EXPECTED_SHA256 or add to llmfit-sidecar-hashes.json');
-    process.exit(1);
-  }
+  verifySidecarHash(dest, pinned);
 } else {
   writeStub();
 }

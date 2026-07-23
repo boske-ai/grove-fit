@@ -1,0 +1,9 @@
+{
+  "comment": "Pin SHA256 of real llmfit sidecars per Rust target triple before release. Empty strings mean 'no pin' — copy scripts refuse real binaries for that triple and write a stub. Stubs do not need hashes. Set LLMFIT_SIDECAR_EXPECTED_SHA256 to override a single build.",
+  "hashes": {
+    "x86_64-apple-darwin": "",
+    "x86_64-unknown-linux-gnu": "",
+    "x86_64-pc-windows-msvc": "",
+    "aarch64-apple-darwin": "cf7a5b57bd5e134abbe99ada1d2d02ee0d669e82238839c8e3b4bd636fa57a19"
+  }
+}

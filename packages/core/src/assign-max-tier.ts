@@ -12,6 +12,10 @@ function resolveGpuBackend(systemInfo: SystemInfo): string {
 /**
  * Assign maximum available Boske local tier from hardware profile.
  * Port of Boske `model-downloader.js` assignMaxTier.
+ *
+ * - metal: Apple unified (RAM − 6)
+ * - cuda / vulkan / webgpu / unknown-with-VRAM: discrete VRAM path
+ * - cpu or unknown/zero VRAM: half-RAM with cpuOnlyCap (max branch)
  */
 export function assignMaxTier(systemInfo: SystemInfo): TierAssignment {
   const totalRAM = parseFloat(String(systemInfo.totalRAMGB));
@@ -24,6 +28,7 @@ export function assignMaxTier(systemInfo: SystemInfo): TierAssignment {
   if (gpuBackend === 'metal') {
     effectiveMemory = Math.max(0, totalRAM - 6);
   } else if (gpuMemoryGB > 0) {
+    // Discrete (or unknown-with-VRAM): do not treat as CPU-only.
     effectiveMemory = Math.max(0, Math.min(gpuMemoryGB + 0.5 * totalRAM, totalRAM) - 4);
   } else {
     effectiveMemory = totalRAM * 0.5;

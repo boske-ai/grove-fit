@@ -5,6 +5,7 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "allow-detect-hardware",
     {
       "identifier": "shell:allow-execute",
       "allow": [

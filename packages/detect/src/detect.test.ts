@@ -76,6 +76,29 @@ describe('hardwareProfileToSystemInfo', () => {
     const snapshot = buildHardwareFitSnapshot(hardwareProfileToSystemInfo(profile));
     expect(snapshot.recommendedTier).toBe('forest');
   });
+
+  it('preserves webgpu backend (no remap to cuda)', () => {
+    const profile = buildManualHardwareProfile({
+      totalRAMGB: 16,
+      gpuMemoryGB: 10,
+      gpuBackend: 'webgpu',
+      platform: 'web',
+    });
+    const info = hardwareProfileToSystemInfo(profile);
+    expect(info.gpuBackend).toBe('webgpu');
+  });
+
+  it('preserves unknown backend (no remap to cpu)', () => {
+    const profile = coerceHardwareProfile({
+      platform: 'linux',
+      totalRAMGB: 32,
+      gpuMemoryGB: 16,
+      gpuBackend: 'unknown',
+      source: 'native',
+    });
+    const info = hardwareProfileToSystemInfo(profile);
+    expect(info.gpuBackend).toBe('unknown');
+  });
 });
 
 describe('native adapters', () => {
@@ -115,5 +138,14 @@ describe('native adapters', () => {
     expect(profile.gpuBackend).toBe('vulkan');
     expect(profile.gpuMemoryGB).toBe(2);
     expect(profile.availableRAMGB).toBe(4);
+  });
+
+  it('applies Android unified heuristic at 16GB (RAM−6, not half-RAM)', () => {
+    const profile = parseNativeDetectRaw({
+      platform: 'android',
+      totalMemoryBytes: 16 * 1024 ** 3,
+    });
+    expect(profile.gpuBackend).toBe('vulkan');
+    expect(profile.gpuMemoryGB).toBe(10);
   });
 });

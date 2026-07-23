@@ -7,6 +7,22 @@ export interface HardwareFormValues {
   gpuBackend: GpuBackend;
 }
 
+/** Parse RAM input; empty/NaN/out-of-range → null (no silent default). */
+export function parseRamInput(raw: string, min = 4, max = 256): number | null {
+  if (raw.trim() === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < min || n > max) return null;
+  return n;
+}
+
+/** Parse VRAM input; empty/NaN/out-of-range → null (0 is valid when typed). */
+export function parseVramInput(raw: string, min = 0, max = 128): number | null {
+  if (raw.trim() === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < min || n > max) return null;
+  return n;
+}
+
 export function profileToFormValues(profile: HardwareProfile): HardwareFormValues {
   return {
     totalRAMGB: profile.totalRAMGB,
@@ -51,9 +67,11 @@ export function HardwareForm({
         max={256}
         value={values.totalRAMGB}
         disabled={disabled}
-        onChange={(e) =>
-          onChange({ ...values, totalRAMGB: Number(e.target.value) || 8 })
-        }
+        onChange={(e) => {
+          const next = parseRamInput(e.target.value);
+          if (next === null) return;
+          onChange({ ...values, totalRAMGB: next });
+        }}
       />
       <label className="gf-label" htmlFor="gf-vram">
         GPU VRAM (GB, 0 if none)
@@ -66,9 +84,11 @@ export function HardwareForm({
         max={128}
         value={values.gpuMemoryGB}
         disabled={disabled}
-        onChange={(e) =>
-          onChange({ ...values, gpuMemoryGB: Number(e.target.value) || 0 })
-        }
+        onChange={(e) => {
+          const next = parseVramInput(e.target.value);
+          if (next === null) return;
+          onChange({ ...values, gpuMemoryGB: next });
+        }}
       />
       <label className="gf-label" htmlFor="gf-backend">
         Backend
@@ -78,9 +98,20 @@ export function HardwareForm({
         className="gf-select"
         value={values.gpuBackend}
         disabled={disabled}
-        onChange={(e) =>
-          onChange({ ...values, gpuBackend: e.target.value as GpuBackend })
-        }
+        onChange={(e) => {
+          const backend = e.target.value;
+          if (
+            backend !== 'cpu' &&
+            backend !== 'metal' &&
+            backend !== 'cuda' &&
+            backend !== 'vulkan' &&
+            backend !== 'webgpu' &&
+            backend !== 'unknown'
+          ) {
+            return;
+          }
+          onChange({ ...values, gpuBackend: backend });
+        }}
       >
         <option value="cpu">CPU only</option>
         <option value="metal">Metal (Apple)</option>

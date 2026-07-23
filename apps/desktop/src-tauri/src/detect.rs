@@ -67,6 +67,7 @@ fn normalize_gpu_backend(raw: &str) -> String {
 
 const LLMFIT_SIDECAR: &str = "binaries/llmfit";
 const MAX_LLMFIT_STDOUT_BYTES: usize = 4 * 1024 * 1024;
+const MAX_SYSTEM_PROFILER_STDOUT_BYTES: usize = 2 * 1024 * 1024;
 
 fn llmfit_stdout_string(stdout: Vec<u8>) -> Option<String> {
     if stdout.len() > MAX_LLMFIT_STDOUT_BYTES {
@@ -83,17 +84,6 @@ async fn try_llmfit_sidecar(app: &AppHandle) -> Option<String> {
         .args(["--json", "system"])
         .output()
         .await
-        .ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    llmfit_stdout_string(output.stdout)
-}
-
-fn try_llmfit_path() -> Option<String> {
-    let output = Command::new("llmfit")
-        .args(["--json", "system"])
-        .output()
         .ok()?;
     if !output.status.success() {
         return None;
@@ -119,7 +109,9 @@ fn detect_macos_native() -> Result<HardwareProfile, String> {
         .args(["SPDisplaysDataType", "-json"])
         .output()
     {
-        if display_out.status.success() {
+        if display_out.status.success()
+            && display_out.stdout.len() <= MAX_SYSTEM_PROFILER_STDOUT_BYTES
+        {
             if let Ok(json) = serde_json::from_slice::<serde_json::Value>(&display_out.stdout) {
                 if let Some(arr) = json.get("SPDisplaysDataType").and_then(|v| v.as_array()) {
                     if let Some(first) = arr.first() {
@@ -262,16 +254,11 @@ pub async fn detect_hardware(app: AppHandle) -> Result<DetectHardwareResult, Str
     if let Some(stdout) = try_llmfit_sidecar(&app).await {
         return Ok(DetectHardwareResult::Llmfit { stdout });
     }
-    if let Some(stdout) = try_llmfit_path() {
-        return Ok(DetectHardwareResult::Llmfit { stdout });
-    }
-    let profile = detect_platform_native()?;
+    // Keep blocking OS probes off the async runtime (system_profiler can stall UI).
+    let profile = tauri::async_runtime::spawn_blocking(detect_platform_native)
+        .await
+        .map_err(|e| format!("native detect join error: {e}"))??;
     Ok(DetectHardwareResult::Native {
         profile: normalize_native_profile(profile),
     })
-}
-
-#[tauri::command]
-pub fn greet() -> String {
-    "Grove Fit — powered by llmfit".into()
 }

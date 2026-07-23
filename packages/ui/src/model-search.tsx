@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { buildFunnelComparison } from '@boske-labs/grove-fit-core';
-import { useCatalogSearch } from './use-catalog-search.js';
+import {
+  useCatalogSearch,
+  type CatalogSearchDocument,
+} from './use-catalog-search.js';
 import { FitBadge } from './fit-badge.js';
 import { ModelResultPanel } from './model-result-panel.js';
 import type { HardwareFitSnapshot } from '@boske-labs/grove-fit-core';
@@ -9,10 +12,11 @@ import type { CatalogModelEntry } from './types.js';
 interface ModelSearchProps {
   entries: CatalogModelEntry[];
   snapshot: HardwareFitSnapshot;
+  searchDocuments?: CatalogSearchDocument[];
 }
 
-export function ModelSearch({ entries, snapshot }: ModelSearchProps) {
-  const { search } = useCatalogSearch(entries);
+export function ModelSearch({ entries, snapshot, searchDocuments }: ModelSearchProps) {
+  const { search } = useCatalogSearch(entries, searchDocuments);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<CatalogModelEntry | null>(null);
   const results = useMemo(() => search(query), [query, search]);

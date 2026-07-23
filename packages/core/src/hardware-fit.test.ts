@@ -93,6 +93,31 @@ describe('assignMaxTier', () => {
     });
     expect(assignment.tier).toBe('branch');
   });
+
+  it('uses discrete VRAM path for webgpu', () => {
+    const assignment = assignMaxTier({
+      totalRAMGB: '16',
+      gpuMemoryGB: '10',
+      gpuBackend: 'webgpu',
+    });
+    expect(assignment.tier).toBe('branch');
+  });
+
+  it('does not force cpuOnlyCap when unknown backend has VRAM', () => {
+    const withVram = assignMaxTier({
+      totalRAMGB: '32',
+      gpuMemoryGB: '16',
+      gpuBackend: 'unknown',
+    });
+    expect(withVram.tier).toBe('forest');
+
+    const noVram = assignMaxTier({
+      totalRAMGB: '64',
+      gpuMemoryGB: '0',
+      gpuBackend: 'unknown',
+    });
+    expect(noVram.tier).toBe('branch');
+  });
 });
 
 describe('funnel', () => {
@@ -103,7 +128,7 @@ describe('funnel', () => {
     expect(suggestBoskeTierForParams(24)).toBe('forest');
   });
 
-  it('suggests Branch for Llama 3.1 8B class model', () => {
+  it('suggests Branch for Llama 3.1 8B without falsely certifying', () => {
     const snapshot = buildHardwareFitSnapshot({
       totalRAMGB: '16',
       gpuMemoryGB: '8',
@@ -114,6 +139,39 @@ describe('funnel', () => {
       snapshot,
     );
     expect(comparison.suggestedBoskeTier).toBe('branch');
+    expect(comparison.suggestedBoskeCertified).toBe(false);
+  });
+
+  it('derives suggestedBoskeCertified from catalog entry', () => {
+    const snapshot = buildHardwareFitSnapshot({
+      totalRAMGB: '16',
+      gpuMemoryGB: '8',
+      gpuBackend: 'cuda',
+    });
+    const comparison = buildFunnelComparison(
+      {
+        id: 'boske-branch',
+        label: 'Boske Branch',
+        paramsB: 8,
+        groveFitCertified: true,
+      },
+      snapshot,
+    );
     expect(comparison.suggestedBoskeCertified).toBe(true);
+  });
+
+  it('marks missing paramsB as unavailable', () => {
+    const snapshot = buildHardwareFitSnapshot({
+      totalRAMGB: '32',
+      gpuMemoryGB: '16',
+      gpuBackend: 'cuda',
+    });
+    const comparison = buildFunnelComparison(
+      { id: 'unknown-size', label: 'Mystery model', paramsB: null },
+      snapshot,
+    );
+    expect(comparison.fitLevel).toBe('unavailable');
+    expect(comparison.suggestedBoskeFitLevel).toBe('unavailable');
+    expect(comparison.suggestedBoskeCertified).toBe(false);
   });
 });

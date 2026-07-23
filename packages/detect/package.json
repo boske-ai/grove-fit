@@ -9,6 +9,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./capacitor": {
+      "types": "./dist/adapters/capacitor/index.d.ts",
+      "import": "./dist/adapters/capacitor/index.js"
+    },
+    "./capacitor/web": {
+      "types": "./dist/adapters/capacitor/web.d.ts",
+      "import": "./dist/adapters/capacitor/web.js"
     }
   },
   "files": ["dist"],
@@ -31,7 +39,16 @@
   "dependencies": {
     "@boske-labs/grove-fit-core": "workspace:*"
   },
+  "peerDependencies": {
+    "@capacitor/core": "^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@capacitor/core": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@capacitor/core": "^7.2.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }

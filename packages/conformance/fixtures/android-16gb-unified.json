@@ -1,0 +1,20 @@
+{
+  "id": "android-16gb-unified",
+  "description": "Android 16 GB unified heuristic (RAM−6 VRAM) — documents intentional GF policy",
+  "profile": {
+    "platform": "android",
+    "totalRAMGB": 16,
+    "gpuMemoryGB": 10,
+    "gpuBackend": "vulkan",
+    "source": "native"
+  },
+  "expected": {
+    "recommendedTier": "branch",
+    "tierFit": {
+      "seed": "recommended",
+      "branch": "recommended",
+      "canopy": "marginal",
+      "forest": "unavailable"
+    }
+  }
+}

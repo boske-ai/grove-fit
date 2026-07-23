@@ -32,7 +32,11 @@ function fitForCatalogEntry(
     return 'unavailable';
   }
 
-  const suggestedTier = suggestBoskeTierForParams(entry.paramsB ?? 0);
+  if (entry.paramsB === null || entry.paramsB === undefined) {
+    return 'unavailable';
+  }
+
+  const suggestedTier = suggestBoskeTierForParams(entry.paramsB);
   return snapshot.tierFit[suggestedTier];
 }
 
@@ -40,7 +44,20 @@ export function buildFunnelComparison(
   catalogEntry: CatalogEntry,
   snapshot: HardwareFitSnapshot,
 ): FunnelComparison {
-  const suggestedBoskeTier = suggestBoskeTierForParams(catalogEntry.paramsB ?? 0);
+  const suggestedBoskeCertified = Boolean(catalogEntry.groveFitCertified);
+
+  if (catalogEntry.paramsB === null || catalogEntry.paramsB === undefined) {
+    return {
+      catalogModelId: catalogEntry.id,
+      catalogModelLabel: catalogEntry.label,
+      fitLevel: 'unavailable',
+      suggestedBoskeTier: 'seed',
+      suggestedBoskeFitLevel: 'unavailable',
+      suggestedBoskeCertified,
+    };
+  }
+
+  const suggestedBoskeTier = suggestBoskeTierForParams(catalogEntry.paramsB);
 
   return {
     catalogModelId: catalogEntry.id,
@@ -48,6 +65,6 @@ export function buildFunnelComparison(
     fitLevel: fitForCatalogEntry(catalogEntry, snapshot),
     suggestedBoskeTier,
     suggestedBoskeFitLevel: snapshot.tierFit[suggestedBoskeTier],
-    suggestedBoskeCertified: true,
+    suggestedBoskeCertified,
   };
 }

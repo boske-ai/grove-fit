@@ -5,10 +5,13 @@ dist/
 packages/models/.cache/
 .DS_Store
 **/test-results/
+# Staged by scripts/stage-catalog.mjs (source of truth: packages/models/)
+apps/web/public/search-index.json
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/binaries/llmfit-*
 apps/desktop/src-tauri/binaries/*.sha256
 !apps/desktop/src-tauri/binaries/README.md
+!apps/desktop/src-tauri/binaries/llmfit-sidecar-hashes.json
 apps/mobile/ios/
 apps/mobile/android/
 

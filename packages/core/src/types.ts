@@ -52,5 +52,5 @@ export interface FunnelComparison {
   fitLevel: FitLevel;
   suggestedBoskeTier: BoskeLocalTier;
   suggestedBoskeFitLevel: FitLevel;
-  suggestedBoskeCertified: true;
+  suggestedBoskeCertified: boolean;
 }

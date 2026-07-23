@@ -4,6 +4,7 @@ import {
   FitPage,
   type CatalogLoadStatus,
   type CatalogModelEntry,
+  type CatalogSearchDocument,
 } from '@boske-labs/grove-fit-ui';
 import '@boske-labs/grove-fit-ui/styles.css';
 import { detectShellHardware } from './detect-hardware.js';
@@ -15,6 +16,9 @@ const boskeEntries = (boskeCatalog as { entries: CatalogModelEntry[] }).entries;
 
 function App() {
   const [entries, setEntries] = useState<CatalogModelEntry[]>(boskeEntries);
+  const [searchDocuments, setSearchDocuments] = useState<CatalogSearchDocument[] | undefined>(
+    undefined,
+  );
   const [catalogStatus, setCatalogStatus] = useState<CatalogLoadStatus>('loading-full');
   const [isRefreshingCatalog, setIsRefreshingCatalog] = useState(false);
 
@@ -27,10 +31,12 @@ function App() {
 
     try {
       const loaded = await loadCatalogEntries(force);
-      setEntries(loaded);
-      setCatalogStatus(loaded.length > boskeEntries.length ? 'ready' : 'boske-only');
+      setEntries(loaded.entries);
+      setSearchDocuments(loaded.searchDocuments);
+      setCatalogStatus(loaded.entries.length > boskeEntries.length ? 'ready' : 'boske-only');
     } catch {
       setEntries(boskeEntries);
+      setSearchDocuments(undefined);
       setCatalogStatus('boske-only');
     } finally {
       setIsRefreshingCatalog(false);
@@ -44,6 +50,7 @@ function App() {
   return (
     <FitPage
       catalogEntries={entries}
+      searchDocuments={searchDocuments}
       catalogStatus={catalogStatus}
       detectHardware={detectShellHardware}
       onRefreshCatalog={() => void loadCatalog(true)}
