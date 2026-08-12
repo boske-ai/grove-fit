@@ -1,6 +1,6 @@
 {
   "name": "@boske-labs/grove-fit-models",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Boske catalog overlay + synced llmfit export",
   "type": "module",
   "main": "./catalog.json",

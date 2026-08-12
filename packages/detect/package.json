@@ -1,6 +1,6 @@
 {
   "name": "@boske-labs/grove-fit-detect",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hardware detection adapters for Grove Fit",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,7 +19,9 @@
       "import": "./dist/adapters/capacitor/web.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run"
