@@ -5,6 +5,7 @@
   "private": true,
   "description": "Grove Fit desktop companion — Tauri shell (Windows, macOS, Linux)",
   "scripts": {
+    "tauri": "tauri",
     "prepare:sidecar": "node ../../scripts/copy-llmfit-sidecar.mjs",
     "dev": "node ../../scripts/copy-llmfit-sidecar.mjs && tauri dev",
     "build": "node ../../scripts/copy-llmfit-sidecar.mjs && tauri build",
