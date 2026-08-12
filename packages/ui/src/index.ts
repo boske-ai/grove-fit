@@ -21,7 +21,7 @@ export {
   type CatalogSearchDocument,
   type CatalogSearcher,
 } from './use-catalog-search.js';
-export { dedupeCatalogEntries, dedupeCatalogEntriesStrict } from './dedupe-catalog.js';
+export { dedupeCatalogEntriesStrict } from './dedupe-catalog.js';
 export {
   FIT_ICONS,
   FIT_LABELS,

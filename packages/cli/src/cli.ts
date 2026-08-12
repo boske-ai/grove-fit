@@ -90,13 +90,18 @@ async function cmdSearch() {
   let limit = 20;
   for (let i = 1; i < args.length; i += 1) {
     const arg = args[i];
-    if (arg === '--json') continue;
+    if (arg === '--json' || arg === '--all') continue;
     if (arg === '--limit') {
       const next = args[i + 1];
-      if (next) {
-        limit = Number.parseInt(next, 10);
-        i += 1;
+      const parsed = next === undefined ? Number.NaN : Number.parseInt(next, 10);
+      // Unvalidated, `--limit abc` became slice(0, NaN) → zero results, and
+      // `--limit -5` silently dropped the last five matches.
+      if (!Number.isInteger(parsed) || parsed < 1) {
+        console.error(`Invalid --limit "${next ?? ''}": expected a positive integer.`);
+        process.exit(1);
       }
+      limit = parsed;
+      i += 1;
       continue;
     }
     queryParts.push(arg);

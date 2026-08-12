@@ -1,11 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import {
-  buildHardwareFitSnapshot,
-  LOCAL_TIERS,
-  type BoskeLocalTier,
-} from '@boske-labs/grove-fit-core';
-import { hardwareProfileToSystemInfo, parseLlmfitSystemJson } from '@boske-labs/grove-fit-detect';
+import { LOCAL_TIERS, type BoskeLocalTier } from '@boske-labs/grove-fit-core';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,21 +13,23 @@ export const TIER_MATCHERS: Record<BoskeLocalTier, RegExp[]> = {
   forest: [/mistral.small.*24/i, /magistral/i, /24b/i],
 };
 
-export async function probeLlmfit(timeoutMs = 5000): Promise<boolean> {
+/**
+ * Probe for llmfit and return its `system` output in one shot.
+ *
+ * The previous split (probe, then run the identical command again) spawned
+ * llmfit twice for every scan/system/search, doubling the slowest step in the
+ * CLI. Returns null when llmfit is unavailable or fails.
+ */
+export async function probeLlmfitSystemJson(timeoutMs = 15000): Promise<string | null> {
   try {
-    await execFileAsync('llmfit', ['--json', 'system'], { timeout: timeoutMs });
-    return true;
+    const { stdout } = await execFileAsync('llmfit', ['--json', 'system'], {
+      timeout: timeoutMs,
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    return stdout;
   } catch {
-    return false;
+    return null;
   }
-}
-
-export async function runLlmfitSystemJson(): Promise<string> {
-  const { stdout } = await execFileAsync('llmfit', ['--json', 'system'], {
-    timeout: 15000,
-    maxBuffer: 4 * 1024 * 1024,
-  });
-  return stdout;
 }
 
 export async function runLlmfitRecommend(all: boolean, limit = 50): Promise<string> {
@@ -43,14 +40,6 @@ export async function runLlmfitRecommend(all: boolean, limit = 50): Promise<stri
   const { stdout } = await execFileAsync('llmfit', args, {
     timeout: 120000,
     maxBuffer: 20 * 1024 * 1024,
-  });
-  return stdout;
-}
-
-export async function runLlmfitSearch(query: string): Promise<string> {
-  const { stdout } = await execFileAsync('llmfit', ['search', query, '--json'], {
-    timeout: 60000,
-    maxBuffer: 10 * 1024 * 1024,
   });
   return stdout;
 }
@@ -76,11 +65,4 @@ export function normalizeRecommendEntries(stdout: string): Array<Record<string, 
     }
   }
   return [];
-}
-
-export async function buildScanSnapshot() {
-  const stdout = await runLlmfitSystemJson();
-  const profile = parseLlmfitSystemJson(stdout);
-  const snapshot = buildHardwareFitSnapshot(hardwareProfileToSystemInfo(profile));
-  return { profile, snapshot };
 }

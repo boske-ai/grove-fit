@@ -11,16 +11,18 @@ on:
         default: ''
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
       - name: Resolve llmfit tag
         id: tag
@@ -33,25 +35,34 @@ jobs:
           else
             TAG="$(curl -fsSL https://api.github.com/repos/AlexsJones/llmfit/releases/latest | python3 -c 'import sys,json; print(json.load(sys.stdin)["tag_name"])')"
           fi
+          # The tag flows into a raw.githubusercontent URL, a git branch name and
+          # a PR title. Constrain it to a known-safe shape rather than trusting
+          # a third-party repo's release metadata.
+          case "$TAG" in
+            *[!A-Za-z0-9._-]*|*..*|'')
+              echo "::error::Refusing suspicious llmfit tag: ${TAG}"
+              exit 1
+              ;;
+          esac
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "Resolved llmfit tag: ${TAG}"
 
       - name: Verify upstream model source path
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-          # Must match scripts/sync-llmfit-db.sh default; do not invent paths.
+          # Must match scripts/sync-llmfit-db.mjs default; do not invent paths.
           HF_PATH: llmfit-core/data/hf_models.json
         run: |
           set -euo pipefail
           URL="https://raw.githubusercontent.com/AlexsJones/llmfit/${TAG}/${HF_PATH}"
           code="$(curl -fsSIL -o /dev/null -w '%{http_code}' "$URL" || true)"
           if [ "$code" != "200" ]; then
-            echo "::error::Upstream model source missing for ${TAG} at ${HF_PATH} (HTTP ${code}). Probe the tagged tree and update sync-llmfit-db.sh — never guess a path."
+            echo "::error::Upstream model source missing for ${TAG} at ${HF_PATH} (HTTP ${code}). Probe the tagged tree and update sync-llmfit-db.mjs — never guess a path."
             exit 1
           fi
           echo "Verified ${URL}"
 
-      - run: bun install
+      - run: bun install --frozen-lockfile
 
       - name: Sync catalog
         env:
@@ -97,7 +108,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add packages/models scripts/sync-llmfit-db.sh || true
+          git add packages/models scripts/sync-llmfit-db.mjs || true
           git commit -m "chore(models): sync catalog from llmfit ${TAG}"
           git push -u origin "$BRANCH"
           COUNT="$(python3 -c 'import json; print(json.load(open("packages/models/catalog-meta.json"))["modelCount"])')"
@@ -111,4 +122,18 @@ jobs:
           - Does **not** publish npm packages
           - Human review required before merge
           EOF
-          )" || gh pr view --json url -q .url
+          )" && exit 0
+
+          # `gh pr create` failed. The old fallback was `|| gh pr view`, which
+          # hid the reason: the branch was pushed, no PR appeared, and the only
+          # signal was a red run nobody was watching. Say what to check.
+          if gh pr view "$BRANCH" --json url -q .url 2>/dev/null; then
+            echo "A pull request already exists for ${BRANCH}."
+            exit 0
+          fi
+
+          echo "::error::Pushed ${BRANCH} but could not open a pull request."
+          echo "::error::Most often this is Settings → Actions → General →"
+          echo "::error::'Allow GitHub Actions to create and approve pull requests' being off."
+          echo "::error::Open it manually: https://github.com/${GITHUB_REPOSITORY}/compare/${BRANCH}?expand=1"
+          exit 1

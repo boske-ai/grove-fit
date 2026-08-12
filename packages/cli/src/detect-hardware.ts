@@ -6,7 +6,7 @@ import {
 } from '@boske-labs/grove-fit-detect';
 import type { HardwareFitSnapshot } from '@boske-labs/grove-fit-core';
 import { detectNativeProfile } from './native-detect.js';
-import { probeLlmfit, runLlmfitSystemJson } from './llmfit.js';
+import { probeLlmfitSystemJson } from './llmfit.js';
 
 export interface DetectHardwareResult {
   profile: HardwareProfile;
@@ -15,8 +15,9 @@ export interface DetectHardwareResult {
 }
 
 export async function detectHardware(): Promise<DetectHardwareResult> {
-  if (await probeLlmfit()) {
-    const stdout = await runLlmfitSystemJson();
+  // One spawn, not two — probe and payload come from the same invocation.
+  const stdout = await probeLlmfitSystemJson();
+  if (stdout !== null) {
     const profile = parseLlmfitSystemJson(stdout);
     const snapshot = buildHardwareFitSnapshot(hardwareProfileToSystemInfo(profile));
     return { profile, snapshot, source: 'llmfit' };

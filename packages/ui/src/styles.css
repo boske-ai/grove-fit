@@ -376,6 +376,12 @@
   color: #8b5a42;
 }
 
+/* Cloud presets are never gated on local hardware (GF4 / GF6). */
+.gf-fit-cloud {
+  background: #e6eef5;
+  color: #35566f;
+}
+
 .gf-stat-row {
   display: flex;
   flex-wrap: wrap;
@@ -423,9 +429,24 @@
   margin-bottom: 0.3rem;
 }
 
+.gf-input-invalid,
+.gf-input-invalid:focus {
+  border-color: #b4553a;
+  outline-color: #b4553a;
+}
+
+.gf-field-error {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  color: #8b3f26;
+}
+
 .gf-input:focus,
 .gf-select:focus {
-  outline: 2px solid rgb(90 125 72 / 25%);
+  /* Was 25% alpha, which falls under the 3:1 WCAG 2.2 expects for a focus
+     indicator. Full-strength brand green with an offset instead. */
+  outline: 2px solid var(--gf-green);
+  outline-offset: 1px;
   border-color: var(--gf-green-light);
 }
 
@@ -669,4 +690,69 @@
 .gf-scanning {
   opacity: 0.55;
   pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive — the same UI ships to iOS/Android via Capacitor (GF11), so the
+   two-column result grid has to collapse rather than squeeze to ~185px/panel.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .gf-shell {
+    padding: 0.6rem 0.7rem 0.55rem;
+  }
+
+  /* Single column: search first, then the Boske tier grid. */
+  .gf-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gf-topbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .gf-topbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Comfortable tap targets on touch shells. */
+  .gf-btn {
+    padding: 0.55rem 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  .gf-input,
+  .gf-select {
+    font-size: 1rem; /* keeps iOS Safari from zooming on focus */
+  }
+
+  .gf-model-row-top {
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gf-root *,
+  .gf-root *::before,
+  .gf-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Detection provenance line — GF13 requires stating how hardware was read. */
+.gf-detect-message {
+  margin: 0 0 0.5rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--gf-earth);
+  background: #fbf9f4;
+  border: 1px solid var(--gf-border);
+  border-radius: 7px;
 }

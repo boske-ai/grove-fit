@@ -1,19 +1,22 @@
 mod detect;
 
 use detect::detect_hardware;
-use std::io::Write;
 use tauri::Manager;
 
+/// Diagnostics for the macOS WebView workaround below.
+///
+/// Debug builds only, and stderr only. The previous version appended to a fixed
+/// `/tmp/grove-fit-desktop.log` in release builds too: on a shared machine any
+/// local user can pre-create that path as a symlink, and `create(true)` follows
+/// it, so the app would append through the link into a file the user owns
+/// (CWE-59). Release builds now write no log file at all.
+#[cfg(debug_assertions)]
 fn desktop_log(message: &str) {
     eprintln!("{message}");
-    if let Ok(mut file) = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("/tmp/grove-fit-desktop.log")
-    {
-        let _ = writeln!(file, "{message}");
-    }
 }
+
+#[cfg(not(debug_assertions))]
+fn desktop_log(_message: &str) {}
 
 /// macOS Tahoe: WKWebView often fails to finish HTTP navigations (Vite/devUrl hangs
 /// forever). Ship UI over the `tauri://` custom protocol instead, and force an

@@ -9,6 +9,10 @@ import {
   parseNativeDetectRaw,
 } from './adapters/native.js';
 import { hardwareProfileToSystemInfo } from './to-system-info.js';
+import {
+  DEVICE_MEMORY_CLAMP_CEILING_GB,
+  webGpuMemoryConfidence,
+} from './adapters/webgpu.js';
 
 describe('coerceHardwareProfile', () => {
   it('normalizes darwin platform and cuda backend from Tauri IPC shape', () => {
@@ -147,5 +151,24 @@ describe('native adapters', () => {
     });
     expect(profile.gpuBackend).toBe('vulkan');
     expect(profile.gpuMemoryGB).toBe(10);
+  });
+});
+
+describe('webGpuMemoryConfidence (GF13)', () => {
+  it('treats readings at or above the clamp ceiling as a lower bound', () => {
+    // Chrome caps deviceMemory at 8; a 24 GB machine cannot be distinguished
+    // from an 8 GB one, so the tier must not be assigned from this alone.
+    expect(webGpuMemoryConfidence(8)).toBe('lower-bound');
+    expect(webGpuMemoryConfidence(16)).toBe('lower-bound');
+    expect(webGpuMemoryConfidence(64)).toBe('lower-bound');
+  });
+
+  it('treats readings below the ceiling as exact', () => {
+    expect(webGpuMemoryConfidence(4)).toBe('exact');
+    expect(webGpuMemoryConfidence(2)).toBe('exact');
+  });
+
+  it('exposes the ceiling it reasons about', () => {
+    expect(DEVICE_MEMORY_CLAMP_CEILING_GB).toBe(8);
   });
 });

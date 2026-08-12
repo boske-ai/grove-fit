@@ -8,6 +8,7 @@
   },
   "main": "./dist/cli.js",
   "scripts": {
+    "start": "bun src/cli.ts",
     "build": "tsc",
     "test": "vitest run"
   },

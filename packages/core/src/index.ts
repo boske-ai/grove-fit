@@ -1,6 +1,7 @@
 export { assignMaxTier } from './assign-max-tier.js';
 export {
   buildFunnelComparison,
+  isCloudEntry,
   suggestBoskeTierForParams,
 } from './funnel.js';
 export {

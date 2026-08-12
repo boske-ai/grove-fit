@@ -63,7 +63,7 @@ export function ModelSearch({ entries, snapshot, searchDocuments }: ModelSearchP
             ) : (
               <ul className="gf-search-results">
                 {results.slice(0, 8).map((entry) => {
-                  const fit = buildFunnelComparison(
+                  const comparison = buildFunnelComparison(
                     {
                       id: entry.id,
                       label: entry.label,
@@ -73,14 +73,20 @@ export function ModelSearch({ entries, snapshot, searchDocuments }: ModelSearchP
                       isCloud: entry.isCloud,
                     },
                     snapshot,
-                  ).fitLevel;
+                  );
                   return (
                     <li key={entry.id}>
                       <button type="button" onClick={() => pick(entry)}>
                         <span className="gf-search-item-label">{entry.label}</span>
                         <span className="gf-search-item-meta">
-                          {entry.paramsB ? `${entry.paramsB}B · ` : ''}
-                          <FitBadge level={fit} size="sm" />
+                          {!comparison.isCloud && entry.paramsB ? `${entry.paramsB}B · ` : ''}
+                          {comparison.isCloud ? (
+                            <span className="gf-fit-badge gf-fit-cloud gf-fit-badge-sm">
+                              Cloud
+                            </span>
+                          ) : (
+                            <FitBadge level={comparison.fitLevel} size="sm" />
+                          )}
                         </span>
                       </button>
                     </li>

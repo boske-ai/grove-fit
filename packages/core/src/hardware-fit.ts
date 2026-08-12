@@ -18,6 +18,10 @@ function resolveGpuBackend(systemInfo: SystemInfo): string {
 
 /**
  * Deterministic 16-char fingerprint for cache keys (browser-safe, non-crypto).
+ *
+ * Two independently seeded FNV-1a passes give a real 64 bits of width — the
+ * previous version repeated one 32-bit digest twice, which looked wider than it
+ * was. Not collision-resistant against an adversary; cache keys only.
  */
 export function buildHardwareFingerprint(systemInfo: SystemInfo): string {
   const totalRAMGB = String(systemInfo.totalRAMGB ?? '');
@@ -26,13 +30,16 @@ export function buildHardwareFingerprint(systemInfo: SystemInfo): string {
   const gpuName = systemInfo.gpu?.name ?? '';
   const payload = `${totalRAMGB}|${gpuMemoryGB}|${gpuBackend}|${gpuName}`;
 
-  let hash = 2166136261;
-  for (let i = 0; i < payload.length; i += 1) {
-    hash ^= payload.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+  function fnv1a(seed: number): string {
+    let hash = seed;
+    for (let i = 0; i < payload.length; i += 1) {
+      hash ^= payload.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
   }
 
-  return (hash >>> 0).toString(16).padStart(8, '0').repeat(2);
+  return `${fnv1a(2166136261)}${fnv1a(0x811c9dc5 ^ 0x5bf03635)}`;
 }
 
 export function computeTierFitLevel(

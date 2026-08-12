@@ -5,22 +5,30 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege by default; no job here needs to write to the repo.
+permissions:
+  contents: read
+
+env:
+  # Refuse to resolve anything the lockfile does not already describe.
+  BUN_INSTALL_FLAGS: --frozen-lockfile
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
       - run: bun run build
       - run: bun test
 
   test-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
       - run: bun run --filter '@boske-labs/grove-fit-core' build
       - run: bun run --filter '@boske-labs/grove-fit-detect' build
       - run: bun run --filter '@boske-labs/grove-fit-core' test
@@ -30,21 +38,59 @@ jobs:
   test-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
       - run: bun run --filter '@boske-labs/grove-fit-core' build
       - run: bun run --filter '@boske-labs/grove-fit-detect' build
       - run: bun run --filter '@boske-labs/grove-fit-core' test
       - run: bun run --filter '@boske-labs/grove-fit-detect' test
       - run: bun run conformance
+      # The catalog sync and sidecar staging must run on Windows too — they were
+      # bash-only, so this guards the regression rather than the feature.
+      - run: node scripts/copy-llmfit-sidecar.mjs
+      - run: node scripts/stage-catalog.mjs
+
+  # Rust normalizers duplicate the TS ones (GF12); this is the only job that
+  # actually exercises the native side.
+  test-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - name: Install Linux WebKit deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev patchelf
+      - run: bun install --frozen-lockfile
+      # `tauri::generate_context!` reads frontendDist at compile time, so the web
+      # bundle must exist before any cargo command touches the crate.
+      - run: bun run --cwd apps/web build
+      - run: cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --all --check
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml -- -D warnings
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+  # detect.rs gates the PowerShell/WMIC probes behind #[cfg(target_os = "windows")],
+  # so no Linux or macOS job ever compiles them. Without this they could ship
+  # broken. Cross-checking from another host needs llvm-rc for the .rc resource,
+  # so it has to run on a real Windows runner.
+  test-rust-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
+      - run: bun run --cwd apps/web build
+      - run: node scripts/copy-llmfit-sidecar.mjs
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml -- -D warnings
 
   test-web-e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
       - run: bun run --cwd apps/web test:e2e
         env:
@@ -53,9 +99,26 @@ jobs:
   test-mobile-unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
       - run: bun run --filter '@boske-labs/grove-fit-core' build
       - run: bun run --filter '@boske-labs/grove-fit-detect' build
       - run: bun run --cwd apps/mobile test
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: bun install --frozen-lockfile
+      # Hard failure. `bun audit` alone reports advisories that do not apply to
+      # the resolved version, so the gate re-checks each one against what is
+      # actually installed and fails only on the real ones.
+      - name: npm advisories
+        run: bun run audit
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit --file apps/desktop/src-tauri/Cargo.lock \
+            || echo "::warning::cargo audit reported advisories — review before release"

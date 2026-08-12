@@ -50,7 +50,12 @@ export interface FunnelComparison {
   catalogModelId: string;
   catalogModelLabel: string;
   fitLevel: FitLevel;
+  /** Cloud preset (Breeze / Summit) — runs on Boske servers, not this machine. */
+  isCloud: boolean;
   suggestedBoskeTier: BoskeLocalTier;
   suggestedBoskeFitLevel: FitLevel;
+  /** Whether the suggested Boske tier is Grove Fit certified (always true — GF4). */
   suggestedBoskeCertified: boolean;
+  /** Whether the *selected* catalog model itself is certified (false for third-party). */
+  catalogModelCertified: boolean;
 }

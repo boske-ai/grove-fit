@@ -32,6 +32,8 @@ export interface FitPageProps {
   catalogStatus?: CatalogLoadStatus;
   onRefreshCatalog?: () => void;
   isRefreshingCatalog?: boolean;
+  /** Base-resolved brand mark URL; see LogoProps.src. */
+  logoSrc?: string;
 }
 
 const DEFAULT_FORM: HardwareFormValues = {
@@ -53,6 +55,7 @@ export function FitPage({
   catalogStatus = 'ready',
   onRefreshCatalog,
   isRefreshingCatalog = false,
+  logoSrc,
 }: FitPageProps) {
   const boskeEntries = useMemo(
     () => catalogEntries.filter((e) => e.isBoske),
@@ -105,6 +108,18 @@ export function FitPage({
         const result = await detectWebGpuHardwareProfile();
         if (result.profile) {
           if (!manualProfileLockedRef.current || force) {
+            if (result.confidence === 'lower-bound') {
+              // The browser clamps deviceMemory, so this reading is a floor, not
+              // a measurement. Accepting it silently under-assigns the tier
+              // (a 24 GB machine reads as 16), so confirm before trusting it —
+              // GF13: fall back to manual when the hint isn't confident.
+              setForm(profileToFormValues(result.profile));
+              setDetectMessage(
+                `Your browser only reports RAM as "${result.profile.totalRAMGB} GB or more" — confirm your actual RAM for an accurate result.`,
+              );
+              setMode('manual');
+              return;
+            }
             applyProfile(result.profile, 'Detected via WebGPU — adjust if this looks wrong.');
           }
           return;
@@ -125,12 +140,12 @@ export function FitPage({
     void runDetect();
   }, [initialProfile]); // mount + when initialProfile prop changes
 
-  function handleManualSubmit() {
+  function handleManualSubmit(submitted: HardwareFormValues) {
     manualProfileLockedRef.current = true;
     const manual = buildManualHardwareProfile({
-      totalRAMGB: form.totalRAMGB,
-      gpuMemoryGB: form.gpuMemoryGB,
-      gpuBackend: form.gpuBackend,
+      totalRAMGB: submitted.totalRAMGB,
+      gpuMemoryGB: submitted.gpuMemoryGB,
+      gpuBackend: submitted.gpuBackend,
       platform: 'web',
     });
     applyProfile(manual, 'Manual hardware profile — nothing is uploaded.');
@@ -148,7 +163,7 @@ export function FitPage({
       <div className="gf-shell">
         <header className="gf-topbar">
           <div className="gf-brand">
-            <Logo size={30} className="gf-brand-logo" />
+            <Logo size={30} className="gf-brand-logo" src={logoSrc} />
             <h1>Grove Fit</h1>
           </div>
           <FitToolbar
@@ -163,6 +178,12 @@ export function FitPage({
 
         {catalogStatus === 'loading-full' ? (
           <div className="gf-loading-banner">Loading catalog…</div>
+        ) : null}
+
+        {/* GF13 requires the UI to state how hardware was detected and invite a
+            correction. This was tracked in state but never rendered. */}
+        {detectMessage && !isScanning ? (
+          <p className="gf-detect-message">{detectMessage}</p>
         ) : null}
 
         {mode === 'manual' || !profile ? (

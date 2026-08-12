@@ -28,13 +28,28 @@ function boskeAsSearchDocs(entries: CatalogModelEntry[]): CatalogSearchDocument[
   }));
 }
 
+/**
+ * Resolve a static asset against the deployed base path.
+ *
+ * Root-absolute URLs break the two shipping targets: under `boske.dev/fit`
+ * they resolve to the domain root, and Tauri serves the bundle from a custom
+ * protocol. Vite's `base` is './', so mirror it here.
+ */
+function assetUrl(name: string, force: boolean): string {
+  const base = import.meta.env.BASE_URL || './';
+  const url = new URL(name, new URL(base, window.location.href));
+  if (force) {
+    url.searchParams.set('t', String(Date.now()));
+  }
+  return url.toString();
+}
+
 async function loadSearchDocuments(
   force: boolean,
   fallback: CatalogSearchDocument[],
 ): Promise<CatalogSearchDocument[]> {
   try {
-    const url = force ? `/search-index.json?t=${Date.now()}` : '/search-index.json';
-    const response = await fetch(url);
+    const response = await fetch(assetUrl('search-index.json', force));
     if (!response.ok) {
       return fallback;
     }
@@ -56,9 +71,8 @@ export async function loadCatalogEntries(force = false): Promise<LoadedCatalog> 
   const boskeDocs = boskeAsSearchDocs(boskeEntries);
 
   try {
-    const url = force ? `/catalog.json?t=${Date.now()}` : '/catalog.json';
     const [catalogResponse, searchDocuments] = await Promise.all([
-      fetch(url),
+      fetch(assetUrl('catalog.json', force)),
       loadSearchDocuments(force, boskeDocs),
     ]);
 

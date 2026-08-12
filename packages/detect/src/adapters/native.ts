@@ -16,23 +16,27 @@ export interface NativeDetectRaw {
   platform: 'ios' | 'android';
 }
 
-export function parseNativeHardwareProfile(payload: NativeDetectPayload): HardwareProfile {
-  const isUnified = payload.platform === 'ios' || payload.platform === 'android';
-  const gpuBackend = payload.hasGpu === false ? 'cpu' : isUnified ? 'metal' : 'vulkan';
+/** Headroom reserved for the OS on unified-memory devices, in GB. */
+const UNIFIED_MEMORY_RESERVED_GB = 6;
 
-  let gpuMemoryGB = 0;
-  if (gpuBackend !== 'cpu' && isUnified) {
-    gpuMemoryGB = Math.max(0, payload.totalRAMGB - 6);
-  } else if (gpuBackend !== 'cpu') {
-    gpuMemoryGB = Math.floor(payload.totalRAMGB * 0.5);
-  }
+export function parseNativeHardwareProfile(payload: NativeDetectPayload): HardwareProfile {
+  const hasGpu = payload.hasGpu !== false;
+
+  // Both supported mobile platforms are unified-memory; they differ only in the
+  // backend label. The previous version computed the backend twice and then
+  // overrode it in the return, leaving an unreachable half-RAM branch behind.
+  const gpuBackend = !hasGpu ? 'cpu' : payload.platform === 'android' ? 'vulkan' : 'metal';
+
+  const gpuMemoryGB = hasGpu
+    ? Math.max(0, payload.totalRAMGB - UNIFIED_MEMORY_RESERVED_GB)
+    : 0;
 
   return assertValidHardwareProfile({
     platform: payload.platform,
     totalRAMGB: payload.totalRAMGB,
     availableRAMGB: payload.availableRAMGB,
     gpuMemoryGB,
-    gpuBackend: payload.platform === 'android' && payload.hasGpu !== false ? 'vulkan' : gpuBackend,
+    gpuBackend,
     gpuName: payload.gpuName,
     source: 'native',
   });

@@ -22,14 +22,18 @@ Automated inclusion of that notice inside Tauri build bundles is tracked as foll
 From repo root (copies from PATH or `LLMFIT_PATH`):
 
 ```bash
-bash scripts/copy-llmfit-sidecar.sh
+node scripts/copy-llmfit-sidecar.mjs
 ```
 
 Install llmfit if needed: `brew install AlexsJones/llmfit/llmfit`
 
 When llmfit is missing, the copy script writes a **stub** executable (exit 1) so Tauri builds succeed; runtime falls back to native OS probes (no PATH `llmfit` fallback).
 
-After copying a **real** binary, the copy script **requires** a pinned SHA256 — either a non-empty `hashes.<triple>` in [`llmfit-sidecar-hashes.json`](./llmfit-sidecar-hashes.json) or `LLMFIT_SIDECAR_EXPECTED_SHA256`. Mismatch fails the script. Missing/empty pins refuse the real binary and write a stub instead (so Intel/Linux/Windows builds without a pin still succeed). Stubs skip hash checks.
+> **Never pin a stub's hash.** Doing so makes every real binary fail
+> verification, which breaks `dev`/`build` for anyone who has llmfit installed.
+> The script now detects and rejects a stub hash in the manifest.
+
+After copying a **real** binary, the copy script **requires** a pinned SHA256 — either a non-empty `hashes.<triple>` in [`llmfit-sidecar-hashes.json`](./llmfit-sidecar-hashes.json) or `LLMFIT_SIDECAR_EXPECTED_SHA256`. Mismatch fails the script **before** the binary is installed, so a failed check never leaves an unverified binary staged for `tauri build`. Missing/empty pins refuse the real binary and write a stub instead (so Intel/Linux/Windows builds without a pin still succeed). Stubs skip hash checks.
 
 Maintainer release steps:
 

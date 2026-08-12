@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHardwareFitSnapshot, type BoskeLocalTier, type FitLevel } from '@boske-labs/grove-fit-core';
@@ -18,19 +18,28 @@ export interface ConformanceFixture {
   };
 }
 
+/**
+ * Every fixture in the directory, discovered rather than listed.
+ *
+ * A hardcoded filename list silently skips any fixture someone adds — the whole
+ * point of the directory is that dropping a file in extends the contract.
+ */
 export function loadFixtures(): ConformanceFixture[] {
-  const files = [
-    '8gb-cpu-only.json',
-    '32gb-metal.json',
-    '16gb-cuda-8vram.json',
-    'android-8gb-unified.json',
-    'android-16gb-unified.json',
-    'ios-6gb-unified.json',
-    'webgpu-16gb-hint.json',
-  ];
+  const files = readdirSync(FIXTURES_DIR)
+    .filter((file) => file.endsWith('.json'))
+    .sort();
+
+  if (files.length === 0) {
+    throw new Error(`No conformance fixtures found in ${FIXTURES_DIR}`);
+  }
+
   return files.map((file) => {
     const raw = readFileSync(join(FIXTURES_DIR, file), 'utf8');
-    return JSON.parse(raw) as ConformanceFixture;
+    const fixture = JSON.parse(raw) as ConformanceFixture;
+    if (!fixture.id || !fixture.profile || !fixture.expected) {
+      throw new Error(`Malformed conformance fixture: ${file}`);
+    }
+    return fixture;
   });
 }
 

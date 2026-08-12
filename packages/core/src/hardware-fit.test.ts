@@ -128,7 +128,7 @@ describe('funnel', () => {
     expect(suggestBoskeTierForParams(24)).toBe('forest');
   });
 
-  it('suggests Branch for Llama 3.1 8B without falsely certifying', () => {
+  it('suggests Branch for Llama 3.1 8B without falsely certifying the model', () => {
     const snapshot = buildHardwareFitSnapshot({
       totalRAMGB: '16',
       gpuMemoryGB: '8',
@@ -139,10 +139,13 @@ describe('funnel', () => {
       snapshot,
     );
     expect(comparison.suggestedBoskeTier).toBe('branch');
-    expect(comparison.suggestedBoskeCertified).toBe(false);
+    // The third-party model is not certified (GF4)…
+    expect(comparison.catalogModelCertified).toBe(false);
+    // …but the Boske tier we compare it against always is.
+    expect(comparison.suggestedBoskeCertified).toBe(true);
   });
 
-  it('derives suggestedBoskeCertified from catalog entry', () => {
+  it('derives catalogModelCertified from the catalog entry', () => {
     const snapshot = buildHardwareFitSnapshot({
       totalRAMGB: '16',
       gpuMemoryGB: '8',
@@ -157,7 +160,7 @@ describe('funnel', () => {
       },
       snapshot,
     );
-    expect(comparison.suggestedBoskeCertified).toBe(true);
+    expect(comparison.catalogModelCertified).toBe(true);
   });
 
   it('marks missing paramsB as unavailable', () => {
@@ -170,8 +173,85 @@ describe('funnel', () => {
       { id: 'unknown-size', label: 'Mystery model', paramsB: null },
       snapshot,
     );
+    // The model itself cannot be sized, so it is not offered…
     expect(comparison.fitLevel).toBe('unavailable');
-    expect(comparison.suggestedBoskeFitLevel).toBe('unavailable');
-    expect(comparison.suggestedBoskeCertified).toBe(false);
+    expect(comparison.catalogModelCertified).toBe(false);
+    expect(comparison.isCloud).toBe(false);
+    // …but the fallback tier still reports its real fit rather than inheriting
+    // "unavailable". Seed genuinely runs on this 32 GB machine.
+    expect(comparison.suggestedBoskeTier).toBe('seed');
+    expect(comparison.suggestedBoskeFitLevel).toBe(snapshot.tierFit.seed);
+    expect(comparison.suggestedBoskeFitLevel).toBe('recommended');
+  });
+});
+
+describe('cloud presets (GF4 / GF6)', () => {
+  // Weakest plausible machine — cloud must still be available on it.
+  const weakSnapshot = buildHardwareFitSnapshot({
+    totalRAMGB: '4',
+    gpuMemoryGB: '0',
+    gpuBackend: 'cpu',
+  });
+
+  it('never reports a cloud preset as unavailable, even with no local tier', () => {
+    expect(weakSnapshot.tierFit.seed).toBe('unavailable');
+
+    for (const label of ['Breeze', 'Summit']) {
+      const comparison = buildFunnelComparison(
+        { id: label.toLowerCase(), label, paramsB: null, isCloud: true },
+        weakSnapshot,
+      );
+      expect(comparison.fitLevel).toBe('recommended');
+      expect(comparison.isCloud).toBe(true);
+    }
+  });
+
+  it('reports the local-tier comparison truthfully rather than inheriting the cloud verdict', () => {
+    // `isCloud` is what tells a consumer the local comparison does not apply.
+    // The tier fit itself must never contradict `snapshot.tierFit` in the same
+    // payload — the CLI emits both together via `search --json`.
+    for (const paramsB of [null, 123]) {
+      const comparison = buildFunnelComparison(
+        { id: 'summit', label: 'Summit', paramsB, isCloud: true },
+        weakSnapshot,
+      );
+      expect(comparison.fitLevel).toBe('recommended');
+      expect(comparison.suggestedBoskeFitLevel).toBe(
+        weakSnapshot.tierFit[comparison.suggestedBoskeTier],
+      );
+      expect(comparison.suggestedBoskeFitLevel).toBe('unavailable');
+    }
+  });
+
+  it('does not gate a cloud preset on minRAMGB', () => {
+    const comparison = buildFunnelComparison(
+      { id: 'summit', label: 'Summit', paramsB: 123, minRAMGB: 512, isCloud: true },
+      weakSnapshot,
+    );
+    expect(comparison.fitLevel).toBe('recommended');
+  });
+
+  it('still gates local models on the same weak hardware', () => {
+    const comparison = buildFunnelComparison(
+      { id: 'llama-70b', label: 'Llama 70B', paramsB: 70 },
+      weakSnapshot,
+    );
+    expect(comparison.fitLevel).toBe('unavailable');
+  });
+});
+
+describe('assignMaxTier input validation', () => {
+  it('throws on non-numeric RAM instead of silently returning seed', () => {
+    expect(() => assignMaxTier({ totalRAMGB: 'not-a-number' })).toThrow(
+      /positive number/i,
+    );
+    expect(() => assignMaxTier({ totalRAMGB: 0 })).toThrow(/positive number/i);
+  });
+
+  it('tolerates unparseable VRAM by treating it as none (CPU-only path)', () => {
+    // 16 GB with no usable VRAM → half-RAM = 8 GB effective → seed.
+    const assignment = assignMaxTier({ totalRAMGB: '16', gpuMemoryGB: 'unknown' });
+    expect(assignment.tier).toBe('seed');
+    expect(assignment.effectiveMemory).toBe(8);
   });
 });

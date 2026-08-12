@@ -2,7 +2,7 @@
 /**
  * Merge llmfit hf_models.json with boske-catalog overlay.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 function parseArgs(argv) {
   const args = {};
@@ -51,6 +51,54 @@ const boskeCatalog = JSON.parse(readFileSync(boskePath, 'utf8'));
 if (!Array.isArray(llmfitModels)) {
   throw new Error('llmfit export must be an array');
 }
+
+/**
+ * Fail on upstream schema drift (GF2 / sync-llmfit-db.md).
+ *
+ * A silent rename upstream — `parameters_raw` in particular — would leave every
+ * paramsB null, which makes every model resolve to "unavailable" downstream
+ * while the entry count stays healthy and CI stays green. Check the shape, not
+ * just the row count.
+ */
+function assertUpstreamSchema(models) {
+  const MIN_MODELS = 200; // GF3: ship the full export, never a curated top-N.
+  if (models.length < MIN_MODELS) {
+    throw new Error(
+      `llmfit export has ${models.length} models, expected >= ${MIN_MODELS} (GF3). ` +
+        'Refusing to publish a truncated catalog.',
+    );
+  }
+
+  const REQUIRED_FIELDS = ['name', 'parameters_raw', 'quantization', 'min_ram_gb'];
+  const sample = models.slice(0, 50);
+  for (const field of REQUIRED_FIELDS) {
+    const present = sample.filter((m) => m[field] !== undefined).length;
+    if (present === 0) {
+      throw new Error(
+        `llmfit export is missing "${field}" on all sampled rows — upstream schema drift. ` +
+          'Probe the tagged tree and update merge-catalog.mjs before syncing.',
+      );
+    }
+  }
+
+  // parameters_raw drives every fit verdict; a mostly-null column is drift.
+  const withParams = models.filter(
+    (m) => Number.isFinite(m.parameters_raw) && m.parameters_raw > 0,
+  ).length;
+  const ratio = withParams / models.length;
+  if (ratio < 0.5) {
+    throw new Error(
+      `Only ${(ratio * 100).toFixed(1)}% of models have a usable parameters_raw. ` +
+        'Every model without it reports as "unavailable" — refusing to publish.',
+    );
+  }
+
+  console.log(
+    `Upstream schema OK: ${models.length} models, ${(ratio * 100).toFixed(1)}% with parameters_raw`,
+  );
+}
+
+assertUpstreamSchema(llmfitModels);
 
 const boskeEntries = boskeCatalog.entries.map((entry) => ({
   ...entry,
@@ -124,13 +172,33 @@ for (const model of llmfitModels) {
     isBoske: false,
     isCloud: false,
     searchTokens,
-    upstream: model,
+    // The raw upstream record is deliberately NOT embedded here. It had no
+    // consumer and accounted for ~61% of catalog.json (about 4 MB), all of it
+    // shipped to every visitor. Everything the UI and CLI render is projected
+    // into the fields above; re-run the sync if a new field is needed.
   });
+}
+
+/**
+ * `syncedAt` records when the data was pulled from upstream, not when this
+ * script last ran. Re-merging a cached export (to change the projection, say)
+ * must not advance it — that would claim a fetch that never happened.
+ */
+function resolveSyncedAt() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!metaPath || !existsSync(metaPath)) return today;
+  try {
+    const prev = JSON.parse(readFileSync(metaPath, 'utf8'));
+    const unchangedUpstream = prev.llmfitVersion === llmfitVersion;
+    return unchangedUpstream && prev.syncedAt ? prev.syncedAt : today;
+  } catch {
+    return today;
+  }
 }
 
 const catalog = {
   version: 1,
-  syncedAt: new Date().toISOString().slice(0, 10),
+  syncedAt: resolveSyncedAt(),
   llmfitVersion,
   boskeEntries,
   entries: [...boskeEntries, ...catalogEntries],
@@ -156,8 +224,11 @@ if (metaPath) {
   );
 }
 
+// Hard failure, not a warning: a warning here exits 0 and lets a truncated
+// catalog sail through CI and into a release.
 if (catalog.modelCount < 200) {
-  console.warn(`Warning: modelCount ${catalog.modelCount} < 200 (GF3)`);
+  console.error(`merge-catalog: modelCount ${catalog.modelCount} < 200 (GF3)`);
+  process.exit(1);
 }
 
 console.log(`Wrote ${catalog.entries.length} entries (${catalog.modelCount} llmfit + ${boskeEntries.length} boske)`);

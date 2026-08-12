@@ -44,11 +44,14 @@ describe('createCatalogSearcher', () => {
     expect(searcher.byId.get('llama-8b')?.label).toBe('Llama 3.1 8B');
   });
 
-  it('does not rebuild entry map per query', () => {
+  it('reuses one entry map across queries instead of rebuilding per search', () => {
     const searcher = createCatalogSearcher(entries, slimDocs);
-    expect(searcher.byId).toBe(searcher.byId);
+    // Capture the identity up front — comparing `searcher.byId` to itself in a
+    // single expression is a tautology and asserts nothing.
+    const mapBefore = searcher.byId;
     searcher.search('seed');
     searcher.search('llama');
+    expect(searcher.byId).toBe(mapBefore);
     expect(searcher.byId.get('boske-seed')?.groveFitCertified).toBe(true);
   });
 });

@@ -14,7 +14,7 @@ Grove Fit (MIT — see [`LICENSE`](./LICENSE)) incorporates or redistributes wor
 
 1. **Model catalog data** — `packages/models/catalog.json` and `packages/models/search-index.json` are derived from the pinned llmfit model export, merged with the Boske overlay (`boske-catalog.json`).
 2. **Optional native CLI** — when installed on PATH, the Grove Fit CLI and desktop detect path may invoke the `llmfit` binary.
-3. **Optional Tauri sidecar** — desktop builds may stage a platform `llmfit` binary under `apps/desktop/src-tauri/binaries/` via `scripts/copy-llmfit-sidecar.sh`. **Any distribution that ships that binary must also ship llmfit’s MIT license notice** (this file or an equivalent copy of the upstream LICENSE).
+3. **Optional Tauri sidecar** — desktop builds may stage a platform `llmfit` binary under `apps/desktop/src-tauri/binaries/` via `scripts/copy-llmfit-sidecar.mjs`. **Any distribution that ships that binary must also ship llmfit’s MIT license notice** (this file or an equivalent copy of the upstream LICENSE).
 
 ### llmfit MIT license text (from tag `v1.1.3`)
 

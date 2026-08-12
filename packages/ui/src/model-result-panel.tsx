@@ -37,6 +37,7 @@ export function ModelResultPanel({ model, snapshot, funnel, onClose }: ModelResu
   const sizeClass = suggestBoskeTierForParams(model.paramsB ?? 0);
   const modelFit = comparison.fitLevel;
   const boskeFit = comparison.suggestedBoskeFitLevel;
+  const isCloud = comparison.isCloud;
 
   return (
     <div className="gf-model-result">
@@ -44,8 +45,12 @@ export function ModelResultPanel({ model, snapshot, funnel, onClose }: ModelResu
         <div>
           <div className="gf-model-name">{model.label}</div>
           <div className="gf-model-meta">
-            {model.paramsB ? `${model.paramsB}B` : 'Unknown size'}
-            {model.minRAMGB ? ` · ~${model.minRAMGB} GB RAM` : ''}
+            {isCloud
+              ? 'Boske Cloud — runs on our servers'
+              : model.paramsB
+                ? `${model.paramsB}B`
+                : 'Unknown size'}
+            {!isCloud && model.minRAMGB ? ` · ~${model.minRAMGB} GB RAM` : ''}
           </div>
         </div>
         {onClose ? (
@@ -55,28 +60,46 @@ export function ModelResultPanel({ model, snapshot, funnel, onClose }: ModelResu
         ) : null}
       </div>
 
-      <div className="gf-verdict">
-        <div className="gf-verdict-row">
-          <span className="gf-verdict-label">On your machine</span>
-          <FitBadge level={modelFit} />
+      {/* Cloud presets never depend on local hardware (GF4, GF6) — showing a
+          hardware verdict for them would contradict the cloud fallback pitch. */}
+      {isCloud ? (
+        <div className="gf-verdict">
+          <div className="gf-verdict-row">
+            <span className="gf-verdict-label">Availability</span>
+            <span className="gf-fit-badge gf-fit-cloud">Always available</span>
+          </div>
+          <p className="gf-verdict-copy">
+            No download and no local GPU needed — this tier runs in Boske Cloud.
+          </p>
         </div>
-        <p className="gf-verdict-copy">{fitSummaryLine(modelFit)}</p>
-      </div>
+      ) : (
+        <>
+          <div className="gf-verdict">
+            <div className="gf-verdict-row">
+              <span className="gf-verdict-label">On your machine</span>
+              <FitBadge level={modelFit} />
+            </div>
+            <p className="gf-verdict-copy">{fitSummaryLine(modelFit)}</p>
+          </div>
 
-      <div className="gf-divider" />
+          <div className="gf-divider" />
 
-      <div className="gf-verdict gf-verdict-secondary">
-        <div className="gf-verdict-row">
-          <span className="gf-verdict-label">
-            Similar Boske tier · {TIER_ICONS[sizeClass]} {tierDisplayName(sizeClass)}
-          </span>
-          <FitBadge level={boskeFit} size="sm" />
-        </div>
-        <div className="gf-verdict-foot">
-          <GroveFitCertifiedBadge />
-          <span className="gf-verdict-hint">Curated for the Boske app — same size class.</span>
-        </div>
-      </div>
+          <div className="gf-verdict gf-verdict-secondary">
+            <div className="gf-verdict-row">
+              <span className="gf-verdict-label">
+                Similar Boske tier · {TIER_ICONS[sizeClass]} {tierDisplayName(sizeClass)}
+              </span>
+              <FitBadge level={boskeFit} size="sm" />
+            </div>
+            <div className="gf-verdict-foot">
+              <GroveFitCertifiedBadge />
+              <span className="gf-verdict-hint">
+                Curated for the Boske app — same size class.
+              </span>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

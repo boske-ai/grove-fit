@@ -55,6 +55,7 @@ function App() {
       detectHardware={detectShellHardware}
       onRefreshCatalog={() => void loadCatalog(true)}
       isRefreshingCatalog={isRefreshingCatalog}
+      logoSrc={new URL('logo.jpeg', new URL(import.meta.env.BASE_URL || './', window.location.href)).toString()}
     />
   );
 }

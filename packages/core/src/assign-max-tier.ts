@@ -19,7 +19,14 @@ function resolveGpuBackend(systemInfo: SystemInfo): string {
  */
 export function assignMaxTier(systemInfo: SystemInfo): TierAssignment {
   const totalRAM = parseFloat(String(systemInfo.totalRAMGB));
-  const gpuMemoryGB = parseFloat(String(systemInfo.gpuMemoryGB ?? '0'));
+  // Fail fast rather than silently degrading to seed on NaN (CONTRIBUTING: no
+  // silent fallbacks) — this is a public export, not only reached via snapshot.
+  if (!Number.isFinite(totalRAM) || totalRAM <= 0) {
+    throw new Error('totalRAMGB must be a positive number to assign a tier');
+  }
+
+  const parsedGpuMemory = parseFloat(String(systemInfo.gpuMemoryGB ?? '0'));
+  const gpuMemoryGB = Number.isFinite(parsedGpuMemory) ? parsedGpuMemory : 0;
   const gpuBackend = resolveGpuBackend(systemInfo);
 
   let effectiveMemory: number;

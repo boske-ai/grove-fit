@@ -52,8 +52,8 @@ export function TierResultGrid({ snapshot, boskeTiers }: TierResultGridProps) {
         })}
 
         {cloudTiers.length > 0 ? (
-          <li className="gf-model-row gf-model-row-label" aria-hidden>
-            Cloud fallback
+          <li className="gf-model-row gf-model-row-label" role="presentation">
+            <span id="gf-cloud-group-label">Cloud fallback</span>
           </li>
         ) : null}
 

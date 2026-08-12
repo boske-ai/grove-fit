@@ -36,7 +36,7 @@ Stage the platform binary before `tauri dev` / `tauri build`:
 
 ```bash
 # from repo root
-bash scripts/copy-llmfit-sidecar.sh
+node scripts/copy-llmfit-sidecar.mjs
 # or
 cd apps/desktop && bun run prepare:sidecar
 ```

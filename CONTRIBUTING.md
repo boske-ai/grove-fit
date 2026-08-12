@@ -8,6 +8,7 @@ Thanks for helping with hardware ↔ model fit for local AI.
 bun install
 bun test
 bun run conformance
+bun run audit
 ```
 
 | Command | Purpose |
@@ -18,6 +19,7 @@ bun run conformance
 | `bun run test:e2e` | Playwright smoke |
 | `bun run --cwd apps/mobile test` | Mobile plugin unit tests |
 | `bun run sync:catalog` | Refresh catalog from pinned llmfit tag |
+| `cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml` | Lint the desktop crate |
 
 Optional: [llmfit](https://github.com/AlexsJones/llmfit) on PATH for richer scans; Rust/Tauri for desktop; Xcode/Android SDK for mobile.
 
@@ -29,6 +31,9 @@ Optional: [llmfit](https://github.com/AlexsJones/llmfit) on PATH for richer scan
 - Do **not** call Hugging Face at runtime on website paths — catalog is bundled JSON.
 - Do **not** publish npm packages from casual PRs.
 - User-facing cloud copy uses **Summit**, never **Ancient**.
+- Cloud presets are never gated on hardware — see [GF15](./docs/decisions.md).
+- Build scripts must run on Windows: prefer `scripts/*.mjs` over bash.
+- Do **not** embed raw upstream records in the catalog ([GF17](./docs/decisions.md)).
 
 ## Catalog sync
 

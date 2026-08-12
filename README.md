@@ -13,6 +13,11 @@
 
 Try the live calculator: **[boske.dev/fit](https://boske.dev/fit)** (client-side — no hardware upload).
 
+Desktop apps for macOS, Windows and Linux are built from a `v*` tag and attached to
+[Releases](https://github.com/boske-ai/grove-fit/releases). They are currently
+**unsigned** — macOS needs right-click → Open on first launch, Windows shows a
+SmartScreen warning.
+
 ## Quick start
 
 ```bash
@@ -23,6 +28,8 @@ bun run dev:web      # browser UI → http://127.0.0.1:3847
 ```
 
 Optional richer hardware scan: install [llmfit](https://github.com/AlexsJones/llmfit) (`brew install AlexsJones/llmfit/llmfit`).
+
+All build and sync scripts are Node — they run on Windows, macOS and Linux alike.
 
 CLI:
 
@@ -43,7 +50,23 @@ Grove Fit answers which **local models** fit a machine’s RAM, GPU, and backend
 
 **Architecture in one line:** llmfit is the base; Grove Fit is the elevation (Boske overlay, certified badges, Breeze / Summit cloud fallback, static catalog).
 
-Details: [`docs/architecture.md`](./docs/architecture.md) · decisions: [`docs/decisions.md`](./docs/decisions.md).
+Details: [`docs/architecture.md`](./docs/architecture.md) · decisions: [`docs/decisions.md`](./docs/decisions.md)
+· embedding it elsewhere: [`docs/using-in-boske.md`](./docs/using-in-boske.md).
+
+## Building the desktop app
+
+```bash
+bun run --cwd apps/desktop build   # bundles for the host platform
+```
+
+Output lands in `apps/desktop/src-tauri/target/release/bundle/`. Each platform
+builds on its own machine — Tauri cannot practically cross-compile, since Windows
+needs the MSVC linker and `llvm-rc`, and Linux needs webkit2gtk/gtk3. CI does all
+three on native runners.
+
+Install [llmfit](https://github.com/AlexsJones/llmfit) first for richer GPU
+detection; without it the app falls back to native OS probes, and the build stages
+a stub rather than shipping an unverified binary.
 
 ## Repo layout
 
@@ -69,4 +92,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md). Please read [`CODE_OF_CONDUCT.md`](.
 
 **Boske**, **Boske Labs**, **Grove Fit**, and **Grove Fit certified** are trademarks / product names of Canopy Studio / Boske Labs. MIT does **not** grant trademark rights; forks must not imply endorsement.
 
-npm packages (`@boske-labs/grove-fit-*`) are prepared but **not published yet** — use this repo or vendored copies for now.
+npm packages (`@boske-labs/grove-fit-*`) are prepared but **not published yet** — use a
+git dependency or vendor `packages/core/src/`. See
+[`docs/using-in-boske.md`](./docs/using-in-boske.md) for the options and the stable
+API surface.

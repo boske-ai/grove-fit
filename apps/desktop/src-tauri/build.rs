@@ -10,9 +10,16 @@ fn run_sidecar_copy() {
         return;
     }
 
-    let status = std::process::Command::new("node")
-        .arg(&script)
-        .status();
+    // Tauri stages the sidecar by *target* triple, but the script defaults to
+    // the host's. Without this, cross-compiling stages a binary named for the
+    // build machine and tauri then fails with "resource path ... doesn't exist".
+    let mut command = std::process::Command::new("node");
+    command.arg(&script);
+    if let Ok(target) = std::env::var("TARGET") {
+        command.env("TARGET_TRIPLE", target);
+    }
+
+    let status = command.status();
 
     match status {
         Ok(s) if s.success() => {}

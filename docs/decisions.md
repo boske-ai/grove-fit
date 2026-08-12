@@ -193,3 +193,120 @@ WebGPU estimates are **heuristic**, not llmfit tok/s — same honesty rules as G
 - Do **not** fork llmfit for v1; PR upstream for Android/iOS detect JSON parity.
 - Mobile companion is a **calculator**, not a promise of 24B local inference on phone.
 - When upstream mobile detect ships, replace native plugins without changing UI or core rules.
+
+---
+
+# Amendments (2026-08-06)
+
+Following an audit of the repo. Each entry supersedes part of a locked decision
+above; the originals stay as written.
+
+---
+
+## GF15 — Cloud presets are exempt from hardware fit (supersedes part of GF4 / GF6)
+
+`GF4` and `docs/architecture.md` already said Breeze and Summit are "always
+available", but the fit engine did not implement it: cloud entries have no
+`paramsB`, and `fitForCatalogEntry` mapped a missing `paramsB` to `unavailable`.
+Selecting Breeze rendered **"Won't run — not enough RAM or GPU for this model
+size"** on the same screen that offered Breeze as the cloud fallback.
+
+**Rule:** `isCloud` is checked *before* any hardware reasoning.
+`buildFunnelComparison` returns `fitLevel: 'recommended'` and `isCloud: true`,
+and the UI renders an "Always available" badge instead of a hardware verdict.
+`minRAMGB` on a cloud entry is ignored, never a gate.
+
+---
+
+## GF16 — `deviceMemory` is a lower bound, not a measurement (implements GF13)
+
+`GF13` required falling back to manual when "the memory hint is insufficient for
+confident tier assignment". No confidence check existed; any positive
+`navigator.deviceMemory` was treated as exact.
+
+Because user agents clamp the value (Chrome caps at 8) a reading at the ceiling
+means *at least* that much. Measured: a **24 GB** machine reported **16 GB**, and
+was recommended **Branch** where the truth is **Canopy**.
+
+**Rule:** `webGpuMemoryConfidence()` marks any reading `>= 8 GB` as
+`lower-bound`. On a lower-bound reading the UI prefills the manual form and asks
+the user to confirm rather than assigning a tier. Only readings below the
+ceiling are treated as exact.
+
+---
+
+## GF17 — Catalog ships projected fields only (supersedes GF3's size rationale)
+
+GF3's "bundle size is acceptable (JSON gzip ~few hundred KB)" was written for a
+"200+ model" catalog. At **5,744** models, `merge-catalog.mjs` was embedding the
+entire raw upstream record per entry as `upstream` — **61% of the file (~5.4 MB)**
+— with no consumer anywhere in the repo.
+
+**Rule:** the catalog carries only projected fields the UI and CLI actually read.
+Adding a field means adding it to the projection and re-running the sync, never
+re-embedding the raw record.
+
+| | before | after |
+|---|---|---|
+| catalog.json | 8.84 MB | **3.40 MB** |
+| gzipped | 488 KB | **241 KB** |
+
+GF3's substance is unchanged: still the full export, still no curated top-N —
+now enforced by a hard failure in `merge-catalog.mjs` rather than a warning.
+
+---
+
+## GF18 — Conformance must exercise the code that can diverge (extends GF12)
+
+GF12 promised identical results "on every platform", and CI ran the matrix on
+three OSes. But the fixtures fed a pre-normalized `HardwareProfile` into pure
+TypeScript — the same deterministic function on three runners, which cannot
+diverge. The code that *can* diverge (the Rust, Swift and Java normalizers) was
+never exercised, and the Rust one already had: it was missing the `amd → cuda`
+mapping and returned raw strings for unknown platforms where TS returns `linux`.
+
+**Rules:**
+1. `loadFixtures()` globs the fixture directory — a hardcoded list silently
+   skipped any fixture that was added.
+2. `normalize_platform` / `normalize_gpu_backend` in `detect.rs` must stay
+   behaviorally identical to `normalize.ts`; both carry a comment saying so.
+3. CI runs `cargo clippy -D warnings` and `cargo test` on the desktop crate.
+
+---
+
+## GF19 — Release builds ship no debugger and no log file
+
+The desktop app enabled Tauri's `devtools` feature unconditionally and appended
+diagnostics to a fixed `/tmp/grove-fit-desktop.log` in every build. On a shared
+machine a local user can pre-create that path as a symlink, and `create(true)`
+follows it (CWE-59).
+
+**Rule:** `devtools` is an opt-in cargo feature (`--features devtools`), and
+`desktop_log` is `#[cfg(debug_assertions)]` and stderr-only. Release builds write
+no log file. Any future logging goes through `app.path().app_log_dir()`, never a
+fixed path in a world-writable directory.
+
+---
+
+## GF20 — The desktop sidecar name is the runtime basename (2026-08-06)
+
+`try_llmfit_sidecar` passed `"binaries/llmfit"` to `shell().sidecar(...)`, matching
+the `externalBin` entry in `tauri.conf.json`. But `sidecar()` resolves against
+`<dir of the running executable>`, and the bundler stages the binary *next to*
+the executable with the `binaries/` prefix and target triple stripped. Every
+lookup therefore failed with `No such file or directory`, the `.ok()?` swallowed
+it, and detection fell back to the native probe.
+
+Effect: the desktop app had **never** used llmfit. It reported the coarser
+native numbers while the UI said nothing was wrong, and no test noticed because
+the fallback is a legitimate path.
+
+**Rules:**
+1. The constant is the runtime basename (`"llmfit"`), not the config path. The
+   two look interchangeable and are not.
+2. Verified by running the built `.app` against a sidecar that prints a
+   recognisable payload and confirming the UI reports `source: llmfit` — a
+   type-check cannot catch this.
+3. A silent fallback needs a visible signal. `HardwareSummary` shows the GPU name
+   and the detect line states the method, so llmfit-vs-native is now legible in
+   the UI itself.

@@ -136,7 +136,7 @@ function stageMacDevApp(binaryPath) {
 }
 
 console.log('  Staging llmfit sidecar…');
-await run('bash', [join(root, 'scripts/copy-llmfit-sidecar.sh')], { cwd: root });
+await run(process.execPath, [join(root, 'scripts/copy-llmfit-sidecar.mjs')], { cwd: root });
 
 console.log('  Building web dist…');
 await run('bun', ['x', 'vite', 'build'], { cwd: join(root, 'apps/web') });

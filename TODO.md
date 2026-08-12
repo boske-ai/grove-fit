@@ -1,6 +1,6 @@
 # Grove Fit — roadmap
 
-Last updated: 2026-07-15
+Last updated: 2026-08-12
 
 Open hardware fit for local AI. Live at **[boske.dev/fit](https://boske.dev/fit)**.
 
@@ -16,6 +16,9 @@ Open hardware fit for local AI. Live at **[boske.dev/fit](https://boske.dev/fit)
 
 | Item | Notes |
 |------|-------|
+| Enable Actions → "create and approve pull requests" | Repo setting; the monthly sync pushes a branch but cannot open its PR without it |
+| Enable private vulnerability reporting | Repo setting; `SECURITY.md` points at it already |
+| Code signing for desktop releases | Apple Developer ID + Windows cert; releases are unsigned today |
 | Mobile emulator CI | Android / iOS runners |
 | Upstream llmfit Android detect | [llmfit#175](https://github.com/AlexsJones/llmfit/issues/175) |
 | Deeper Boske app integration | Optional — desktop wizard can import this engine later |
@@ -24,4 +27,4 @@ Open hardware fit for local AI. Live at **[boske.dev/fit](https://boske.dev/fit)
 
 | Item | Notes |
 |------|-------|
-| npm publish `@boske-labs/grove-fit-*` | After more soak on `/fit` + catalog sync. Not required to use the repo or website. |
+| npm publish `@boske-labs/grove-fit-*` | After more soak on `/fit` + catalog sync. Not required to use the repo or website — see [`docs/using-in-boske.md`](./docs/using-in-boske.md). |

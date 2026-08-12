@@ -8,11 +8,20 @@ edition = "2021"
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[features]
+default = []
+# Web inspector. Opt-in only — shipping it in release builds hands anyone with
+# local access a debugger attached to the app. Enable with:
+#   cargo build --features devtools     (or `tauri dev --features devtools`)
+devtools = ["tauri/devtools"]
+
 [dependencies]
-tauri = { version = "2", features = ["devtools"] }
+tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Timeout for the llmfit sidecar; Tauri's async runtime is tokio already.
+tokio = { version = "1", features = ["time"] }
 
 # macOS 26+/27 (Tahoe): ObjC method encodings flipped signed→unsigned ints.
 # Without this, tao's did_finish_launching panics and the WebView stays blank.

@@ -53,10 +53,30 @@ function expectedHashForTriple(triple) {
   return '';
 }
 
+const STUB_CONTENT = `#!/usr/bin/env bash
+# Placeholder — replace via copy-llmfit-sidecar when llmfit is installed.
+exit 1
+`;
+
+/** SHA256 of the placeholder we write when llmfit is absent. */
+function stubSha256() {
+  return createHash('sha256').update(STUB_CONTENT, 'utf8').digest('hex');
+}
+
 /** Returns pinned hash, or null when the triple has no pin (empty placeholder). */
 function pinnedHashOrNull(triple) {
   const expected = expectedHashForTriple(triple);
-  return expected || null;
+  if (!expected) return null;
+  // A stub is not a release artifact. Pinning its hash makes every real binary
+  // fail verification and silently converts the pin into a build-breaker.
+  if (expected === stubSha256()) {
+    console.error(
+      `copy-llmfit-sidecar: hashes.${triple} is the placeholder stub's SHA256, not a real llmfit binary.`,
+    );
+    console.error('  Clear it to "" (no pin), or pin the real binary you intend to ship.');
+    process.exit(1);
+  }
+  return expected;
 }
 
 /** Unpinned real sidecars are refused — stub so cargo/tauri builds still succeed. */
@@ -77,6 +97,22 @@ function verifySidecarHash(file, expected) {
     console.error(`copy-llmfit-sidecar: SHA256 mismatch for ${targetTriple}`);
     console.error(`  expected: ${expected}`);
     console.error(`  actual:   ${actual}`);
+    process.exit(1);
+  }
+  console.log(`copy-llmfit-sidecar: SHA256 verified (${actual})`);
+}
+
+/**
+ * Verify a candidate BEFORE it is installed at `dest`, so a failed check never
+ * leaves an unverified binary staged for `tauri build` to pick up.
+ */
+function verifyCandidateOrExit(candidate, expected) {
+  const actual = sha256File(candidate);
+  if (actual !== expected) {
+    console.error(`copy-llmfit-sidecar: SHA256 mismatch for ${targetTriple} — not installing`);
+    console.error(`  expected: ${expected}`);
+    console.error(`  actual:   ${actual}`);
+    console.error(`  source:   ${candidate}`);
     process.exit(1);
   }
   console.log(`copy-llmfit-sidecar: SHA256 verified (${actual})`);
@@ -119,14 +155,7 @@ function sidecarUpToDate(src, destPath) {
 }
 
 function writeStub() {
-  writeFileSync(
-    dest,
-    `#!/usr/bin/env bash
-# Placeholder — replace via copy-llmfit-sidecar when llmfit is installed.
-exit 1
-`,
-    'utf8',
-  );
+  writeFileSync(dest, STUB_CONTENT, 'utf8');
   try {
     chmodSync(dest, 0o755);
   } catch {
@@ -170,17 +199,16 @@ if (src) {
   if (!pinned) {
     refuseUnpinnedRealSidecar();
   }
+  // Check first, install second.
+  verifyCandidateOrExit(src, pinned);
   copyFileSync(src, dest);
   try {
     chmodSync(dest, 0o755);
   } catch {
     // Windows may ignore executable bits.
   }
-  const actualHash = sha256File(dest);
-  writeFileSync(`${dest}.sha256`, `${actualHash}\n`, 'utf8');
+  writeFileSync(`${dest}.sha256`, `${pinned}\n`, 'utf8');
   console.log(`copy-llmfit-sidecar: copied ${src} → ${dest}`);
-  console.log(`copy-llmfit-sidecar: sha256 ${actualHash}`);
-  verifySidecarHash(dest, pinned);
 } else {
   writeStub();
 }

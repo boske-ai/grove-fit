@@ -12,6 +12,9 @@ export {
 export {
   applyWebGpuSource,
   detectWebGpuHardwareProfile,
+  webGpuMemoryConfidence,
+  DEVICE_MEMORY_CLAMP_CEILING_GB,
+  type WebGpuConfidence,
   type WebGpuDetectResult,
 } from './adapters/webgpu.js';
 export {

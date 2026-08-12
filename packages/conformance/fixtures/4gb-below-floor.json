@@ -1,0 +1,20 @@
+{
+  "id": "4gb-below-floor",
+  "description": "4 GB CPU-only — below every local tier floor, cloud fallback is the only answer (GF6)",
+  "profile": {
+    "platform": "linux",
+    "totalRAMGB": 4,
+    "gpuMemoryGB": 0,
+    "gpuBackend": "cpu",
+    "source": "manual"
+  },
+  "expected": {
+    "recommendedTier": "seed",
+    "tierFit": {
+      "seed": "unavailable",
+      "branch": "unavailable",
+      "canopy": "unavailable",
+      "forest": "unavailable"
+    }
+  }
+}

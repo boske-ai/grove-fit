@@ -37,7 +37,10 @@ async function detectMacosNative(): Promise<HardwareProfile> {
   return assertValidHardwareProfile({
     platform: 'macos',
     totalRAMGB,
-    gpuMemoryGB: totalRAMGB,
+    // Unified memory: the GPU shares system RAM but cannot address all of it.
+    // Reporting total RAM as VRAM made the CLI print "24 GB VRAM" on a 24 GB
+    // Mac. Mirrors the mobile adapter and the Rust desktop probe.
+    gpuMemoryGB: Math.max(0, totalRAMGB - 6),
     gpuBackend: 'metal',
     gpuName,
     source: 'native',

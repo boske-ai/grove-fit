@@ -30,15 +30,16 @@ Legacy `data/hf_models.json` returns **404** on llmfit v1.x tags — do not inve
 bun run sync:catalog
 
 # or pin explicitly
-LLMFIT_VERSION=v1.1.3 bash scripts/sync-llmfit-db.sh
+LLMFIT_VERSION=v1.1.3 node scripts/sync-llmfit-db.mjs
 ```
 
 Pipeline:
 
-1. `scripts/sync-llmfit-db.sh` — curl pinned export into `packages/models/.cache/`
+1. `scripts/sync-llmfit-db.mjs` — fetch pinned export into `packages/models/.cache/`
 2. `scripts/merge-catalog.mjs` — Boske overlay, `suggestedBoskeTier`, `searchTokens`, stable `id`
 3. `scripts/build-search-index.mjs` — search index for web / CLI
-4. Symlink `apps/web/public/catalog.json` → models package
+4. Copy catalog + search index into `apps/web/public/` (never a symlink — a tracked
+   symlink breaks Windows checkouts)
 
 Validate: `modelCount` remains large (GF3 — thousands, not a curated top-N).
 

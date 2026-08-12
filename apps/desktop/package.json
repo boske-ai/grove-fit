@@ -5,9 +5,9 @@
   "private": true,
   "description": "Grove Fit desktop companion — Tauri shell (Windows, macOS, Linux)",
   "scripts": {
-    "prepare:sidecar": "bash ../../scripts/copy-llmfit-sidecar.sh",
-    "dev": "bash ../../scripts/copy-llmfit-sidecar.sh && tauri dev",
-    "build": "bash ../../scripts/copy-llmfit-sidecar.sh && tauri build",
+    "prepare:sidecar": "node ../../scripts/copy-llmfit-sidecar.mjs",
+    "dev": "node ../../scripts/copy-llmfit-sidecar.mjs && tauri dev",
+    "build": "node ../../scripts/copy-llmfit-sidecar.mjs && tauri build",
     "test": "echo \"Desktop: run conformance + manual Tauri smoke\""
   },
   "devDependencies": {

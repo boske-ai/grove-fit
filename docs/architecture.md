@@ -101,10 +101,10 @@ No network except static asset load (catalog bundle).
 ```bash
 # from repo root — pin is packages/models/catalog-meta.json
 bun run sync:catalog
-# or: LLMFIT_VERSION=v1.1.3 bash scripts/sync-llmfit-db.sh
+# or: LLMFIT_VERSION=v1.1.3 node scripts/sync-llmfit-db.mjs
 ```
 
-`scripts/sync-llmfit-db.sh` fetches the verified upstream model export for the pinned tag
+`scripts/sync-llmfit-db.mjs` fetches the verified upstream model export for the pinned tag
 (from llmfit **v1.1.3**: `llmfit-core/data/hf_models.json`), then runs:
 
 - `scripts/merge-catalog.mjs` — Boske overlay, `suggestedBoskeTier`, `searchTokens`, stable `id`
@@ -154,3 +154,16 @@ Fit rules here stay aligned with Boske’s desktop hardware-fit logic. Deeper in
 | Sync script (maintainer) | Fetches public llmfit JSON at build time |
 
 No telemetry in v1.
+
+### Desktop hardening
+
+| Control | Where |
+|---------|-------|
+| CSP: `script-src 'self'`, no inline scripts | `tauri.conf.json` |
+| Sidecar limited to one binary and one exact argv | `capabilities/default.json` |
+| `withGlobalTauri` disabled (no ambient IPC bridge) | `tauri.conf.json` |
+| Devtools opt-in via cargo feature, off in release | `Cargo.toml` |
+| No log file in release; debug logging is stderr-only | `lib.rs` ([GF19](./decisions.md)) |
+| OS probes invoked by absolute path, not via `PATH` | `detect.rs` |
+| 15s timeout on the llmfit sidecar | `detect.rs` |
+| Sidecar SHA256 pinned and verified before install | `scripts/copy-llmfit-sidecar.mjs` |

@@ -5,7 +5,10 @@ dist/
 packages/models/.cache/
 .DS_Store
 **/test-results/
-# Staged by scripts/stage-catalog.mjs (source of truth: packages/models/)
+# Staged by scripts/stage-catalog.mjs (source of truth: packages/models/).
+# Never commit these — a tracked symlink here breaks Windows checkouts, where
+# git materializes it as a text file containing the link target.
+apps/web/public/catalog.json
 apps/web/public/search-index.json
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/binaries/llmfit-*
